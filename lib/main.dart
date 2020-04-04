@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'Edit.dart';
-import 'Node.dart';
+import 'package:note2mind/Edit.dart';
+import 'package:note2mind/Node.dart';
 
 void main() => runApp(MyApp());
 
@@ -33,7 +33,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var _noteList = new List<String>();
-  var _rootNode = new Node(title: '');
+  var _treeList = new List<Node>();
   var _currentIndex = -1;
   bool _loading = true;
   final _biggerFont = const TextStyle(fontSize: 18.0);
