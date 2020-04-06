@@ -42,9 +42,6 @@ class Node {
       String childTitle = children[i].title;
       if (childTitle == title) return children[i];
     }
-    // children.forEach((child) {
-    //   if (child.title == title) return child;
-    // });
   }
 
   void removeChild(String title) {

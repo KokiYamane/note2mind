@@ -4,17 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:note2mind/Node.dart';
 
 class TreeEdit extends StatelessWidget {
-  // String _current;
-  Node _current;
+  String _current;
+  Node _root;
   Function _onChanged;
 
-  TreeEdit(this._current, this._onChanged);
+  TreeEdit(this._current, this._onChanged) {
+    _root = new Node.readMarkdown(_current);
+  }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(
-        title: new Text('Edit'),
+        title: new Text(_root.title),
         actions: <Widget>[
           FlatButton(
             onPressed: () => FocusScope.of(context).requestFocus(FocusNode()),
@@ -28,29 +30,16 @@ class TreeEdit extends StatelessWidget {
           shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
         ),
       ),
-      body: new Container(
-        padding: const EdgeInsets.all(16.0),
-        // child: new TextField(
-        //   controller: TextEditingController(text: _current),
-        //   maxLines: 99,
-        //   style: new TextStyle(color: Colors.black),
-        //   autofocus: true,
-        //   onChanged: (text) {
-        //     _current = text;
-        //     _onChanged(_current);
-        //   },
-        // )),
-        child: TreeEditField(tree: _current),
-      ),
+      body: TreeEditField(root: _root, onChanged: _onChanged),
     );
   }
 }
 
 class TreeEditField extends StatefulWidget {
-  TreeEditField({Key key, this.tree}) : super(key: key);
+  TreeEditField({Key key, this.root, this.onChanged}) : super(key: key);
 
-  final Node tree;
-  List<Widget> widgetList;
+  Node root;
+  Function onChanged;
 
   @override
   _TreeEditFieldState createState() => _TreeEditFieldState();
@@ -64,14 +53,48 @@ class _TreeEditFieldState extends State<TreeEditField> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[Text(widget.tree.title)],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: _createField(widget.root),
     );
   }
 
-  List<Widget> createWidgetList() {
-    List<Widget> widgetList = new List<Widget>();
-    widgetList.add(Text(widget.tree.title));
-    return widgetList;
+  Widget _createField(Node node, [int level = 0]) {
+    Widget childrenColumn = Column(
+        children: node.children.map<Widget>((Node child) {
+      return _createField(child, level + 1);
+    }).toList());
+
+    List<Widget> mainWidgetList = new List<Widget>();
+    if (level == 0) {
+      mainWidgetList.add(childrenColumn);
+      // mainWidgetList.add(_createNewLine());
+    } else {
+      mainWidgetList.add(_createNewLine(node));
+      mainWidgetList.add(Container(
+          margin: const EdgeInsets.fromLTRB(30, 0, 0, 0),
+          child: childrenColumn));
+    }
+
+    return Column(children: mainWidgetList);
   }
+
+  TextField _createNewLine(Node node) {
+    return TextField(
+      controller: TextEditingController(text: node.title),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+      ),
+      onChanged: (text) {
+        // _onChanged(text, node);
+        node.title = text;
+        widget.onChanged(widget.root.writeMarkdown());
+      },
+    );
+  }
+
+  // void _onChanged(String text, Node node) {
+  //   node.title = text;
+  //   widget.onChanged(node.writeMarkdown());
+  // }
 }

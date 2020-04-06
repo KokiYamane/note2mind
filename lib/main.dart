@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:note2mind/Edit.dart';
-import 'package:note2mind/Node.dart';
+import 'package:note2mind/TreeEdit.dart';
+
+String markdown = '''
+# root
+- リスト1
+  - ネスト リスト1_1
+    - ネスト リスト1_1_1
+    - ネスト リスト1_1_2
+  - ネスト リスト1_2
+- リスト2
+- リスト3
+''';
 
 void main() => runApp(MyApp());
 
@@ -15,9 +25,6 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.teal,
       ),
       home: MyHomePage(title: 'Home'),
-      routes: <String, WidgetBuilder>{
-        '/home': (BuildContext context) => new MyHomePage(),
-      },
     );
   }
 }
@@ -33,9 +40,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var _noteList = new List<String>();
-  var _treeList = new List<Node>();
   var _currentIndex = -1;
-  bool _loading = true;
   final _biggerFont = const TextStyle(fontSize: 18.0);
 
   @override
@@ -65,20 +70,18 @@ class _MyHomePageState extends State<MyHomePage> {
       if (prefs.containsKey(key)) {
         _noteList = prefs.getStringList(key);
       }
-      setState(() {
-        _loading = false;
-      });
     });
   }
 
   void _addNote() {
     setState(() {
-      _noteList.add("");
+      // _noteList.add("");
+      _noteList.add(markdown);
       _currentIndex = _noteList.length - 1;
       storeNoteList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context) {
-          return new Edit(_noteList[_currentIndex], _onChanged);
+          return new TreeEdit(_noteList[_currentIndex], _onChanged);
         },
       ));
     });
@@ -129,7 +132,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildRow(String content, int index) {
-    return ListTile(
+    return Card(child: ListTile(
       title: Text(
         content,
         style: _biggerFont,
@@ -140,9 +143,9 @@ class _MyHomePageState extends State<MyHomePage> {
         _currentIndex = index;
         Navigator.of(context)
             .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-          return new Edit(_noteList[_currentIndex], _onChanged);
+          return new TreeEdit(_noteList[_currentIndex], _onChanged);
         }));
       },
-    );
+    ));
   }
 }
