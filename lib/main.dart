@@ -64,13 +64,13 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void loadNoteList() {
-    SharedPreferences.getInstance().then((prefs) {
-      const key = "note-list";
-      if (prefs.containsKey(key)) {
-        _noteList = prefs.getStringList(key);
-      }
-    });
+  void loadNoteList() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    const key = "note-list";
+
+    if (mounted) {
+      setState(() => _noteList = prefs.getStringList(key) ?? []);
+    }
   }
 
   void _addNote() {
@@ -95,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void storeNoteList() async {
-    final prefs = await SharedPreferences.getInstance();
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
     const key = "note-list";
     final success = await prefs.setStringList(key, _noteList);
     if (!success) {
@@ -108,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: itemCount,
-        itemBuilder: /*1*/ (context, i) {
+        itemBuilder: (context, i) {
           if (i.isOdd) return Divider(height: 2);
           final index = (i / 2).floor();
           final note = _noteList[index];
@@ -119,20 +119,21 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildWrappedRow(String content, int index) {
     return Dismissible(
       background: Container(color: Colors.red),
-      key: Key(content),
+      key: UniqueKey(),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
         setState(() {
           _noteList.removeAt(index);
-          storeNoteList();
         });
+        storeNoteList();
       },
       child: _buildRow(content, index),
     );
   }
 
   Widget _buildRow(String content, int index) {
-    return Card(child: ListTile(
+    return Card(
+      child: ListTile(
       title: Text(
         content,
         style: _biggerFont,

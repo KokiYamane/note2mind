@@ -68,7 +68,6 @@ class _TreeEditFieldState extends State<TreeEditField> {
     List<Widget> mainWidgetList = new List<Widget>();
     if (level == 0) {
       mainWidgetList.add(childrenColumn);
-      // mainWidgetList.add(_createNewLine());
     } else {
       mainWidgetList.add(_createNewLine(node));
       mainWidgetList.add(Container(
@@ -86,15 +85,21 @@ class _TreeEditFieldState extends State<TreeEditField> {
         border: InputBorder.none,
       ),
       onChanged: (text) {
-        // _onChanged(text, node);
+        if (text == '') {
+          node.remove();
+          setState(() {});
+          return;
+        }
         node.title = text;
         widget.onChanged(widget.root.writeMarkdown());
       },
+      onSubmitted: (text) {
+        node.getParent().insertChild(node, 'title');
+        setState(() {});
+      },
+      onTap: () {
+        debugPrint('TAP');
+      },
     );
   }
-
-  // void _onChanged(String text, Node node) {
-  //   node.title = text;
-  //   widget.onChanged(node.writeMarkdown());
-  // }
 }

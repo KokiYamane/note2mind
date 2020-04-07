@@ -33,11 +33,18 @@ class Node {
   }
 
   Node addChild(String title) {
-    children.add(Node(title, this));
-    return children.last;
+    Node newNode = Node(title, this);
+    children.add(newNode);
+    return newNode;
   }
 
-  getChild(String title) {
+  Node insertChild(Node index, String title) {
+    Node newNode = Node(title, this);
+    children.insert(children.indexOf(index) + 1, newNode);
+    return newNode;
+  }
+
+  Node getChild(String title) {
     for (int i = 0; i < children.length; i++) {
       String childTitle = children[i].title;
       if (childTitle == title) return children[i];
@@ -49,6 +56,10 @@ class Node {
       String childTitle = children[i].title;
       if (childTitle == title) children.removeAt(i);
     }
+  }
+
+  void remove() {
+    _parent.removeChild(title);
   }
 
   Node getParent() {
