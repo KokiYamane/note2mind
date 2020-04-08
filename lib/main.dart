@@ -132,21 +132,31 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildRow(String content, int index) {
-    return Card(
-      child: ListTile(
-      title: Text(
-        content,
-        style: _biggerFont,
-        // maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+    return LongPressDraggable(
+      child: Card(
+        child: ListTile(
+          title: Text(
+            content,
+            style: _biggerFont,
+            overflow: TextOverflow.ellipsis,
+          ),
+          onTap: () {
+            _currentIndex = index;
+            Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
+              return new TreeEdit(_noteList[_currentIndex], _onChanged);
+            }));
+          },
+        )
       ),
-      onTap: () {
-        _currentIndex = index;
-        Navigator.of(context)
-            .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-          return new TreeEdit(_noteList[_currentIndex], _onChanged);
-        }));
-      },
-    ));
+      feedback: Card(
+        child: Text(
+          content,
+          style: _biggerFont,
+          // maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      )
+    );
   }
 }

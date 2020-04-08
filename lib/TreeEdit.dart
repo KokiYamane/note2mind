@@ -69,7 +69,7 @@ class _TreeEditFieldState extends State<TreeEditField> {
     if (level == 0) {
       mainWidgetList.add(childrenColumn);
     } else {
-      mainWidgetList.add(_createNewLine(node));
+      mainWidgetList.add(_buildWrappedLine(node));
       mainWidgetList.add(Container(
           margin: const EdgeInsets.fromLTRB(30, 0, 0, 0),
           child: childrenColumn));
@@ -78,7 +78,28 @@ class _TreeEditFieldState extends State<TreeEditField> {
     return Column(children: mainWidgetList);
   }
 
-  TextField _createNewLine(Node node) {
+  Widget _buildWrappedLine(Node node) {
+    return DragTarget(
+      builder: (context, candidateData, rejectedData) {
+        return LongPressDraggable(
+          data: node,
+          child: Row(children: <Widget>[
+            Icon(Icons.arrow_right),
+            Expanded(child: _buildLine(node)),
+          ]),
+          feedback: Text(
+            node.title,
+            style: const TextStyle(fontSize: 16.0),
+          ),
+        );
+      },
+      onAccept: (dynamic) {
+        print('onAccept');
+      },
+    );
+  }
+
+  Widget _buildLine(Node node) {
     return TextField(
       controller: TextEditingController(text: node.title),
       decoration: InputDecoration(
@@ -96,9 +117,6 @@ class _TreeEditFieldState extends State<TreeEditField> {
       onSubmitted: (text) {
         node.getParent().insertChild(node, 'title');
         setState(() {});
-      },
-      onTap: () {
-        debugPrint('TAP');
       },
     );
   }
