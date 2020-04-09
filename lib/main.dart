@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:note2mind/Node.dart';
 import 'package:note2mind/TreeEdit.dart';
+import 'package:note2mind/Mindmap.dart';
 
 String markdown = '''
 # root
@@ -11,7 +13,17 @@ String markdown = '''
     - ネスト リスト1_1_2
   - ネスト リスト1_2
 - リスト2
+  - ネスト リスト2_1
+    - ネスト リスト2_1_1
+    - ネスト リスト2_1_2
+  - ネスト リスト2_2
 - リスト3
+  - ネスト リスト3_1
+    - ネスト リスト3_1_1
+    - ネスト リスト3_1_2
+  - ネスト リスト3_2
+    - ネスト リスト3_2_1
+    - ネスト リスト3_2_2
 ''';
 
 void main() => runApp(MyApp());
@@ -39,7 +51,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var _noteList = new List<String>();
+  var _noteList = List<String>();
   var _currentIndex = -1;
   final _biggerFont = const TextStyle(fontSize: 18.0);
 
@@ -81,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
       storeNoteList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context) {
-          return new TreeEdit(_noteList[_currentIndex], _onChanged);
+          return TreeEdit(_noteList[_currentIndex], _onChanged);
         },
       ));
     });
@@ -132,26 +144,43 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildRow(String content, int index) {
+  // Widget _buildRow(Node node, int index) {
     return LongPressDraggable(
-      child: Card(
-        child: ListTile(
-          title: Text(
-            content,
-            style: _biggerFont,
-            overflow: TextOverflow.ellipsis,
-          ),
+      // child: Card(
+        // child: ListTile(
+        //   title: Text(
+        //     content,
+        //     style: _biggerFont,
+        //     overflow: TextOverflow.ellipsis,
+        //   ),
+        //   onTap: () {
+        //     _currentIndex = index;
+        //     Navigator.of(context)
+        //         .push(MaterialPageRoute<void>(builder: (BuildContext context) {
+        //       return TreeEdit(_noteList[_currentIndex], _onChanged);
+        //     }));
+        //   },
+        // )
+        child: GestureDetector(
           onTap: () {
             _currentIndex = index;
             Navigator.of(context)
                 .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-              return new TreeEdit(_noteList[_currentIndex], _onChanged);
+              return TreeEdit(_noteList[_currentIndex], _onChanged);
             }));
           },
-        )
-      ),
+          child: Card(child: Transform.scale(
+            scale: 0.1,
+            child: CustomPaint(
+              painter: MindmapPainter(Node.readMarkdown(content)),
+              size: Size(200.0, 100.0),
+            ),
+          ),
+        )),
       feedback: Card(
         child: Text(
           content,
+          // node.title,
           style: _biggerFont,
           // maxLines: 1,
           overflow: TextOverflow.ellipsis,

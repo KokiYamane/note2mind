@@ -62,6 +62,22 @@ class Node {
     _parent.removeChild(title);
   }
 
+  bool isProgeny(Node target) {
+    if (target.getParent() == null) return false;
+    if (target.getParent() == this) return true;
+    isProgeny(target.getParent());
+  }
+
+  void move(Node target) {
+    if (target == this) return;
+    if (isProgeny(target)) return;
+
+    Node parent = _parent;
+    _parent = target;
+    target.children.insert(0, this);
+    parent.removeChild(title);
+  }
+
   Node getParent() {
     return _parent;
   }

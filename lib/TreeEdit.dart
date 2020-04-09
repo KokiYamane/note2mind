@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:note2mind/Node.dart';
+import 'package:note2mind/Mindmap.dart';
 
 class TreeEdit extends StatelessWidget {
   String _current;
@@ -9,15 +10,25 @@ class TreeEdit extends StatelessWidget {
   Function _onChanged;
 
   TreeEdit(this._current, this._onChanged) {
-    _root = new Node.readMarkdown(_current);
+    _root = Node.readMarkdown(_current);
   }
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: new Text(_root.title),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_root.title),
         actions: <Widget>[
+          FlatButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (BuildContext context) {
+                return Mindmap(_root);
+              }));
+            },
+            child: Icon(Icons.image),
+            shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+          ),
           FlatButton(
             onPressed: () => FocusScope.of(context).requestFocus(FocusNode()),
             child: Icon(Icons.check),
@@ -26,7 +37,7 @@ class TreeEdit extends StatelessWidget {
         ],
         leading: FlatButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Icon(Icons.arrow_back_ios),
+          child: Icon(Icons.arrow_back),
           shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
         ),
       ),
@@ -75,28 +86,37 @@ class _TreeEditFieldState extends State<TreeEditField> {
           child: childrenColumn));
     }
 
-    return Column(children: mainWidgetList);
-  }
-
-  Widget _buildWrappedLine(Node node) {
-    return DragTarget(
+    return Card(child: DragTarget<Node>(
       builder: (context, candidateData, rejectedData) {
-        return LongPressDraggable(
+        return LongPressDraggable<Node>(
           data: node,
-          child: Row(children: <Widget>[
-            Icon(Icons.arrow_right),
-            Expanded(child: _buildLine(node)),
-          ]),
-          feedback: Text(
-            node.title,
-            style: const TextStyle(fontSize: 16.0),
+          child: Column(children: mainWidgetList),
+          feedback: Card(
+            child: Text(
+              node.title,
+              style: const TextStyle(fontSize: 24.0),
+            ),
+            // child: Column(children: mainWidgetList),
+            // child: Expanded(child: Column(children: mainWidgetList)),
           ),
         );
       },
-      onAccept: (dynamic) {
-        print('onAccept');
+      // onWillAccept: (thisNode) {
+      //   return true;
+      // },
+      onAccept: (thisNode) {
+        thisNode.move(node);
+        widget.onChanged(widget.root.writeMarkdown());
+        setState(() {});
       },
-    );
+    ));
+  }
+
+  Widget _buildWrappedLine(Node node) {
+    return Card(child: Row(children: <Widget>[
+      Icon(Icons.arrow_right),
+      Expanded(child: _buildLine(node)),
+    ]));
   }
 
   Widget _buildLine(Node node) {
@@ -106,16 +126,11 @@ class _TreeEditFieldState extends State<TreeEditField> {
         border: InputBorder.none,
       ),
       onChanged: (text) {
-        if (text == '') {
-          node.remove();
-          setState(() {});
-          return;
-        }
         node.title = text;
         widget.onChanged(widget.root.writeMarkdown());
       },
       onSubmitted: (text) {
-        node.getParent().insertChild(node, 'title');
+        node.getParent().insertChild(node, '');
         setState(() {});
       },
     );
