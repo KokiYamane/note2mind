@@ -1,7 +1,7 @@
 class Node {
   String title = '';
   List<Node> children = new List();
-  Node _parent = null;
+  Node _parent;
 
   Node(this.title, [this._parent]);
 
@@ -49,12 +49,16 @@ class Node {
       String childTitle = children[i].title;
       if (childTitle == title) return children[i];
     }
+
+    return null;
   }
 
   void removeChild(String title) {
     for (int i = 0; i < children.length; i++) {
-      String childTitle = children[i].title;
-      if (childTitle == title) children.removeAt(i);
+      if (children[i].title == title) {
+        children.removeAt(i);
+        return;
+      }
     }
   }
 
@@ -65,7 +69,7 @@ class Node {
   bool isProgeny(Node target) {
     if (target.getParent() == null) return false;
     if (target.getParent() == this) return true;
-    isProgeny(target.getParent());
+    return isProgeny(target.getParent());
   }
 
   void move(Node target) {

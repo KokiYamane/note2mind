@@ -53,7 +53,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   var _noteList = List<String>();
   var _currentIndex = -1;
-  final _biggerFont = const TextStyle(fontSize: 18.0);
 
   @override
   void initState() {
@@ -67,7 +66,8 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: _buildList(),
+      // drawer: _buildDrawer(),
+      body: _buildGrid(),
       floatingActionButton: FloatingActionButton(
         onPressed: _addNote,
         tooltip: 'add new note',
@@ -87,7 +87,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addNote() {
     setState(() {
-      // _noteList.add("");
       _noteList.add(markdown);
       _currentIndex = _noteList.length - 1;
       storeNoteList();
@@ -115,22 +114,20 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Widget _buildList() {
-    final itemCount = _noteList.length == 0 ? 0 : _noteList.length * 2 - 1;
-    return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: itemCount,
-        itemBuilder: (context, i) {
-          if (i.isOdd) return Divider(height: 2);
-          final index = (i / 2).floor();
-          final note = _noteList[index];
-          return _buildWrappedRow(note, index);
-        });
+  Widget _buildGrid() {
+    return GridView.count(
+      crossAxisCount: 2,
+      children: List.generate(_noteList.length, (i) {
+        final note = _noteList[i];
+        return _buildWrappedCard(note, i);
+      }),
+    );
   }
 
-  Widget _buildWrappedRow(String content, int index) {
+  Widget _buildWrappedCard(String content, int index) {
+    Node root = Node.readMarkdown(content);
+
     return Dismissible(
-      background: Container(color: Colors.red),
       key: UniqueKey(),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
@@ -139,53 +136,86 @@ class _MyHomePageState extends State<MyHomePage> {
         });
         storeNoteList();
       },
-      child: _buildRow(content, index),
+      child: DragTarget<int>(
+        builder: (context, candidateData, rejectedData) {
+          return LongPressDraggable<int>(
+              data: index,
+              child: GestureDetector(
+                  onTap: () {
+                    _currentIndex = index;
+                    Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (BuildContext context) {
+                      return TreeEdit(_noteList[_currentIndex], _onChanged);
+                    }));
+                  },
+                  child: _buildCard(root, index)),
+              feedback: _buildCard(root, index));
+        },
+        onAccept: (moveIndex) {
+          String movingItem = _noteList[moveIndex];
+          setState(() {
+            _noteList.removeAt(moveIndex);
+            _noteList.insert(index, movingItem);
+          });
+        },
+      ),
     );
   }
 
-  Widget _buildRow(String content, int index) {
-  // Widget _buildRow(Node node, int index) {
-    return LongPressDraggable(
-      // child: Card(
-        // child: ListTile(
-        //   title: Text(
-        //     content,
-        //     style: _biggerFont,
-        //     overflow: TextOverflow.ellipsis,
-        //   ),
-        //   onTap: () {
-        //     _currentIndex = index;
-        //     Navigator.of(context)
-        //         .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-        //       return TreeEdit(_noteList[_currentIndex], _onChanged);
-        //     }));
-        //   },
-        // )
-        child: GestureDetector(
-          onTap: () {
-            _currentIndex = index;
-            Navigator.of(context)
-                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-              return TreeEdit(_noteList[_currentIndex], _onChanged);
-            }));
-          },
-          child: Card(child: Transform.scale(
-            scale: 0.1,
-            child: CustomPaint(
-              painter: MindmapPainter(Node.readMarkdown(content)),
-              size: Size(200.0, 100.0),
-            ),
-          ),
-        )),
-      feedback: Card(
-        child: Text(
-          content,
-          // node.title,
-          style: _biggerFont,
-          // maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      )
-    );
+  Widget _buildCard(Node root, int index) {
+    return Card(
+        child: Container(
+            height: 150,
+            width: 150,
+            child: Column(children: <Widget>[
+              Expanded(
+                child: ListTile(
+                  title: Text(
+                    root.title,
+                    maxLines: 2,
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (String s) {
+                      if (s == 'copy') {
+                        setState(() {
+                          _noteList.insert(index, _noteList[index]);
+                        });
+                      } else if (s == 'delete') {
+                        setState(() {
+                          _noteList.removeAt(index);
+                        });
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return ['copy', 'delete'].map((String s) {
+                        return PopupMenuItem(
+                          child: Text(s),
+                          value: s,
+                        );
+                      }).toList();
+                    },
+                  )
+              )),
+              Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Mindmap(root: root)),
+            ])));
   }
+
+  // Widget _buildDrawer() {
+  //   return Drawer(
+  //     child: ListView(
+  //       children: <Widget>[
+  //         UserAccountsDrawerHeader(
+  //           accountName: Text('Raja'),
+  //           accountEmail: Text('testemail@test.com'),
+  //           currentAccountPicture: CircleAvatar(
+  //             backgroundImage: NetworkImage('http://i.pravatar.cc/300'),
+  //           ),
+  //         ),
+  //         Text('memu'),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

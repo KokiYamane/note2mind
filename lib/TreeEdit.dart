@@ -5,43 +5,54 @@ import 'package:note2mind/Node.dart';
 import 'package:note2mind/Mindmap.dart';
 
 class TreeEdit extends StatelessWidget {
-  String _current;
-  Node _root;
-  Function _onChanged;
+  final String _current;
+  final Function _onChanged;
 
-  TreeEdit(this._current, this._onChanged) {
-    _root = Node.readMarkdown(_current);
-  }
+  TreeEdit(this._current, this._onChanged);
 
   @override
   Widget build(BuildContext context) {
+    final Node root = Node.readMarkdown(_current);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_root.title),
-        actions: <Widget>[
-          FlatButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (BuildContext context) {
-                return Mindmap(_root);
-              }));
-            },
-            child: Icon(Icons.image),
-            shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
-          ),
-          FlatButton(
-            onPressed: () => FocusScope.of(context).requestFocus(FocusNode()),
-            child: Icon(Icons.check),
-            shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
-          ),
-        ],
-        leading: FlatButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Icon(Icons.arrow_back),
-          shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+      appBar: _buildAppBar(context, root),
+      body: TreeEditField(root: root, onChanged: _onChanged),
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context, Node root) {
+    return AppBar(
+      title: TextField(
+        controller: TextEditingController(text: root.title),
+        decoration: InputDecoration(
+          border: InputBorder.none,
         ),
+        style: TextStyle(
+            fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
+        onChanged: (text) {
+          root.title = text;
+          _onChanged(root.writeMarkdown());
+        },
       ),
-      body: TreeEditField(root: _root, onChanged: _onChanged),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.image),
+          onPressed: () {
+            Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
+              return MindmapPage(root);
+            }));
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.check),
+          onPressed: () => FocusScope.of(context).requestFocus(FocusNode()),
+        ),
+      ],
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
     );
   }
 }
@@ -49,8 +60,8 @@ class TreeEdit extends StatelessWidget {
 class TreeEditField extends StatefulWidget {
   TreeEditField({Key key, this.root, this.onChanged}) : super(key: key);
 
-  Node root;
-  Function onChanged;
+  final Node root;
+  final Function onChanged;
 
   @override
   _TreeEditFieldState createState() => _TreeEditFieldState();
@@ -86,37 +97,32 @@ class _TreeEditFieldState extends State<TreeEditField> {
           child: childrenColumn));
     }
 
-    return Card(child: DragTarget<Node>(
+    return DragTarget<Node>(
       builder: (context, candidateData, rejectedData) {
         return LongPressDraggable<Node>(
           data: node,
           child: Column(children: mainWidgetList),
           feedback: Card(
-            child: Text(
-              node.title,
-              style: const TextStyle(fontSize: 24.0),
-            ),
-            // child: Column(children: mainWidgetList),
-            // child: Expanded(child: Column(children: mainWidgetList)),
-          ),
+              child: Container(
+                  height: 300,
+                  width: 300,
+                  child: Column(children: mainWidgetList))),
         );
       },
-      // onWillAccept: (thisNode) {
-      //   return true;
-      // },
       onAccept: (thisNode) {
-        thisNode.move(node);
+        setState(() {
+          thisNode.move(node);
+        });
         widget.onChanged(widget.root.writeMarkdown());
-        setState(() {});
       },
-    ));
+    );
   }
 
   Widget _buildWrappedLine(Node node) {
-    return Card(child: Row(children: <Widget>[
+    return Row(children: <Widget>[
       Icon(Icons.arrow_right),
       Expanded(child: _buildLine(node)),
-    ]));
+    ]);
   }
 
   Widget _buildLine(Node node) {
