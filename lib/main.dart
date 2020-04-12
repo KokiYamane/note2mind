@@ -117,9 +117,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildGrid() {
     return GridView.count(
       crossAxisCount: 2,
-      children: List.generate(_noteList.length, (i) {
-        final note = _noteList[i];
-        return _buildWrappedCard(note, i);
+      children: List.generate(_noteList.length, (idx) {
+        String note = _noteList[idx];
+        return _buildWrappedCard(note, idx);
       }),
     );
   }
@@ -169,37 +169,37 @@ class _MyHomePageState extends State<MyHomePage> {
             width: 150,
             child: Column(children: <Widget>[
               Expanded(
-                child: ListTile(
-                  title: Text(
-                    root.title,
-                    maxLines: 2,
-                  ),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (String s) {
-                      if (s == 'copy') {
-                        setState(() {
-                          _noteList.insert(index, _noteList[index]);
-                        });
-                      } else if (s == 'delete') {
-                        setState(() {
-                          _noteList.removeAt(index);
-                        });
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return ['copy', 'delete'].map((String s) {
-                        return PopupMenuItem(
-                          child: Text(s),
-                          value: s,
-                        );
-                      }).toList();
-                    },
-                  )
+                  child: ListTile(
+                title: Text(
+                  root.title,
+                  maxLines: 2,
+                ),
+                trailing: _buildPopuMenu(index),
               )),
               Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: Mindmap(root: root)),
             ])));
+  }
+
+  Widget _buildPopuMenu(int index) {
+    return PopupMenuButton<String>(
+      onSelected: (String s) {
+        if (s == 'copy') {
+          setState(() => _noteList.insert(index, _noteList[index]));
+        } else if (s == 'delete') {
+          setState(() => _noteList.removeAt(index));
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        return ['copy', 'delete'].map((String s) {
+          return PopupMenuItem(
+            child: Text(s),
+            value: s,
+          );
+        }).toList();
+      },
+    );
   }
 
   // Widget _buildDrawer() {

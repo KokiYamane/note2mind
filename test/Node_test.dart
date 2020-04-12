@@ -24,5 +24,7 @@ void main() {
 
     Node root2 = new Node.readMarkdown(markdown);
     print(root2.writeMarkdown());
+
+    print(root2.getNodeNum().toString());
   });
 }

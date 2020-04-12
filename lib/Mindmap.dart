@@ -21,13 +21,13 @@ class MindmapPage extends StatelessWidget {
     return Scaffold(
         appBar: _buildAppBar(context),
         body: Zoom(
-          width: 1000,
-          height: 1000,
-          initZoom: 0.0,
-          child: RepaintBoundary(
-            key: _mindmapKey,
-            child: Mindmap(root: _root),
-        )));
+            width: 1000,
+            height: 1000,
+            initZoom: 0.0,
+            child: RepaintBoundary(
+              key: _mindmapKey,
+              child: Mindmap(root: _root),
+            )));
   }
 
   Widget _buildAppBar(BuildContext context) {
@@ -101,13 +101,14 @@ class MindmapPainter extends CustomPainter {
     Colors.orange,
   ];
 
+  Color _backgroundColor = Colors.white;
+
   @override
   void paint(Canvas canvas, Size size) {
     _canvas = canvas;
     _size = size;
 
-    final paint = Paint()
-      ..color = Colors.white;
+    final paint = Paint()..color = _backgroundColor;
     var rect = Rect.fromLTWH(0, 0, size.width, size.height);
     canvas.drawRect(rect, paint);
 
@@ -168,7 +169,7 @@ class MindmapPainter extends CustomPainter {
         Size(textPainter.width + 2 * padding, textPainter.height + 2 * padding);
     Rect rect = toCenter - Offset(padding, padding) & rectSize;
     RRect rrect = RRect.fromRectXY(rect, 12.0, 12.0);
-    Paint paintWhite = Paint()..color = Colors.white;
+    Paint paintWhite = Paint()..color = _backgroundColor;
 
     Paint line = Paint()
       ..color = boxColor

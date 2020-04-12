@@ -1,7 +1,10 @@
+import 'package:flutter/widgets.dart';
+
 class Node {
   String title = '';
   List<Node> children = new List();
   Node _parent;
+  FocusNode _focusNode = FocusNode();
 
   Node(this.title, [this._parent]);
 
@@ -82,9 +85,19 @@ class Node {
     parent.removeChild(title);
   }
 
-  Node getParent() {
-    return _parent;
+  int getNodeNum() {
+    if (children.length == 0) return 1;
+
+    int sum = 1;
+    for (int i = 0; i < children.length; i++) {
+      sum += children[i].getNodeNum();
+    }
+    return sum;
   }
+
+  Node getParent() => _parent;
+
+  FocusNode getFocusNode() => _focusNode;
 
   String writeMarkdown([int level = 0]) {
     String str = '';

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +19,21 @@ class TreeEdit extends StatelessWidget {
     return Scaffold(
       appBar: _buildAppBar(context, root),
       body: TreeEditField(root: root, onChanged: _onChanged),
+      // floatingActionButton: DragTarget<Node>(
+      //   builder: (context, candidateData, rejectedData) {
+      //     return Container(
+      //       width: 50,
+      //       height: 50,
+      //       color: Colors.grey,
+      //       child: Icon(Icons.restore_from_trash),
+      //     );
+      //     // return ;
+      //   },
+      //   onAccept: (thisNode) {
+      //     thisNode.remove();
+      //     _onChanged(root.writeMarkdown());
+      //   },
+      // ),
     );
   }
 
@@ -24,6 +41,7 @@ class TreeEdit extends StatelessWidget {
     return AppBar(
       title: TextField(
         controller: TextEditingController(text: root.title),
+        focusNode: root.getFocusNode(),
         decoration: InputDecoration(
           border: InputBorder.none,
         ),
@@ -44,10 +62,11 @@ class TreeEdit extends StatelessWidget {
             }));
           },
         ),
-        IconButton(
-          icon: Icon(Icons.check),
-          onPressed: () => FocusScope.of(context).requestFocus(FocusNode()),
-        ),
+        // IconButton(
+        //   icon: Icon(Icons.check),
+        //   // onPressed: () => FocusScope.of(context).requestFocus(FocusNode()),
+        //   onPressed: () => root.getFocusNode().requestFocus()
+        // ),
       ],
       leading: IconButton(
         icon: Icon(Icons.arrow_back),
@@ -68,6 +87,8 @@ class TreeEditField extends StatefulWidget {
 }
 
 class _TreeEditFieldState extends State<TreeEditField> {
+  Node currentNode;
+
   @override
   void initState() {
     super.initState();
@@ -75,10 +96,16 @@ class _TreeEditFieldState extends State<TreeEditField> {
 
   @override
   Widget build(BuildContext context) {
+    Timer(const Duration(milliseconds: 200), _onTimer);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: _createField(widget.root),
     );
+  }
+
+  void _onTimer() {
+    if (currentNode != null) currentNode.getFocusNode().requestFocus();
   }
 
   Widget _createField(Node node, [int level = 0]) {
@@ -104,7 +131,7 @@ class _TreeEditFieldState extends State<TreeEditField> {
           child: Column(children: mainWidgetList),
           feedback: Card(
               child: Container(
-                  height: 300,
+                  height: 50 * node.getNodeNum().toDouble(),
                   width: 300,
                   child: Column(children: mainWidgetList))),
         );
@@ -128,6 +155,7 @@ class _TreeEditFieldState extends State<TreeEditField> {
   Widget _buildLine(Node node) {
     return TextField(
       controller: TextEditingController(text: node.title),
+      focusNode: node.getFocusNode(),
       decoration: InputDecoration(
         border: InputBorder.none,
       ),
@@ -136,8 +164,12 @@ class _TreeEditFieldState extends State<TreeEditField> {
         widget.onChanged(widget.root.writeMarkdown());
       },
       onSubmitted: (text) {
-        node.getParent().insertChild(node, '');
-        setState(() {});
+        Node newNode;
+        setState(() {
+          newNode = node.getParent().insertChild(node, '');
+        });
+        currentNode = newNode;
+        currentNode.getFocusNode().requestFocus();
       },
     );
   }
