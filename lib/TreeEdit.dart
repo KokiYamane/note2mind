@@ -19,21 +19,6 @@ class TreeEdit extends StatelessWidget {
     return Scaffold(
       appBar: _buildAppBar(context, root),
       body: TreeEditField(root: root, onChanged: _onChanged),
-      // floatingActionButton: DragTarget<Node>(
-      //   builder: (context, candidateData, rejectedData) {
-      //     return Container(
-      //       width: 50,
-      //       height: 50,
-      //       color: Colors.grey,
-      //       child: Icon(Icons.restore_from_trash),
-      //     );
-      //     // return ;
-      //   },
-      //   onAccept: (thisNode) {
-      //     thisNode.remove();
-      //     _onChanged(root.writeMarkdown());
-      //   },
-      // ),
     );
   }
 
@@ -46,7 +31,9 @@ class TreeEdit extends StatelessWidget {
           border: InputBorder.none,
         ),
         style: TextStyle(
-            fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+            color: Colors.white),
         onChanged: (text) {
           root.title = text;
           _onChanged(root.writeMarkdown());
@@ -56,10 +43,11 @@ class TreeEdit extends StatelessWidget {
         IconButton(
           icon: Icon(Icons.image),
           onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-              return MindmapPage(root);
-            }));
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (BuildContext context) {
+                return MindmapPage(root);
+              })
+            );
           },
         ),
         // IconButton(
@@ -88,6 +76,7 @@ class TreeEditField extends StatefulWidget {
 
 class _TreeEditFieldState extends State<TreeEditField> {
   Node currentNode;
+  bool dustbin = false;
 
   @override
   void initState() {
@@ -98,10 +87,33 @@ class _TreeEditFieldState extends State<TreeEditField> {
   Widget build(BuildContext context) {
     Timer(const Duration(milliseconds: 200), _onTimer);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: _createField(widget.root),
-    );
+    return Scaffold(
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: _createField(widget.root),
+        ),
+        floatingActionButton: Visibility(
+          child: DragTarget<Node>(
+            builder: (context, candidateData, rejectedData) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  color: Colors.grey,
+                  child: Icon(Icons.delete),
+                )
+              );
+            },
+            onAccept: (thisNode) {
+              setState(() {
+                thisNode.remove();
+              });
+              widget.onChanged(widget.root.writeMarkdown());
+            },
+          ),
+          visible: dustbin,
+        ));
   }
 
   void _onTimer() {
@@ -134,6 +146,16 @@ class _TreeEditFieldState extends State<TreeEditField> {
                   height: 50 * node.getNodeNum().toDouble(),
                   width: 300,
                   child: Column(children: mainWidgetList))),
+          onDragStarted: () {
+            setState(() {
+              dustbin = true;
+            });
+          },
+          onDragEnd: (draggableDetails) {
+            setState(() {
+              dustbin = false;
+            });
+          },
         );
       },
       onAccept: (thisNode) {

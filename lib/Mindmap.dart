@@ -19,15 +19,15 @@ class MindmapPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: _buildAppBar(context),
-        body: Zoom(
-            width: 1000,
-            height: 1000,
-            initZoom: 0.0,
-            child: RepaintBoundary(
-              key: _mindmapKey,
-              child: Mindmap(root: _root),
-            )));
+      appBar: _buildAppBar(context),
+      body: Zoom(
+        width: 1000,
+        height: 1000,
+        initZoom: 0.0,
+        child: RepaintBoundary(
+          key: _mindmapKey,
+          child: Mindmap(root: _root),
+        )));
   }
 
   Widget _buildAppBar(BuildContext context) {
@@ -123,20 +123,22 @@ class MindmapPainter extends CustomPainter {
       double range = 2 * pi,
       int level = 0,
       Color boxColor = Colors.black]) {
-    node.children.asMap().forEach((idx, child) {
+    node.children.asMap().forEach((index, child) {
       double step = range / node.children.length;
-      double startChild = start + step * idx;
+      double startChild = start + step * index;
+      if (level == 0) startChild = start + step * index - step / 2;
+
+      Offset childOffset = _getOffset(level, start, range, node, index);
+      Color childBoxColor = boxColor;
       if (level == 0) {
-        startChild = start + step * idx - step / 2;
+        int step = (colors.length ~/ node.children.length);
+        if (colors.length < node.children.length) step = 1;
+        childBoxColor = colors[step * index % colors.length];
       }
 
-      Offset childOffset = _getOffset(level, start, range, node, idx);
-      Color childBoxColor = boxColor;
-      if (level == 0) childBoxColor = colors[idx % colors.length];
-
       _canvas.drawLine(offset, childOffset, Paint());
-      _nodePainter(
-          child, childOffset, startChild, step, level + 1, childBoxColor);
+      _nodePainter(child, childOffset, startChild,
+                   step, level + 1, childBoxColor);
     });
 
     double fontSize;
@@ -183,12 +185,13 @@ class MindmapPainter extends CustomPainter {
     textPainter.paint(_canvas, toCenter);
   }
 
-  Offset _getOffset(int level, double start, double range, Node node, int idx) {
+  Offset _getOffset(
+      int level, double start, double range, Node node, int index) {
     double rx = 150.0 * (level + 1);
     double ry = 100.0 * (level + 1);
     double step = range / node.children.length;
-    double theta = start + step / 2 + idx * step;
-    if (level == 0) theta = start + idx * step;
+    double theta = start + step / 2 + index * step;
+    if (level == 0) theta = start + index * step;
     double dx = _size.width / 2 + rx * cos(theta);
     double dy = _size.height / 2 + ry * sin(theta);
 
