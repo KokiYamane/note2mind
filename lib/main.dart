@@ -5,26 +5,26 @@ import 'package:note2mind/Node.dart';
 import 'package:note2mind/TreeEdit.dart';
 import 'package:note2mind/Mindmap.dart';
 
-String markdown = '''
-# root
-- リスト1
-  - ネスト リスト1_1
-    - ネスト リスト1_1_1
-    - ネスト リスト1_1_2
-  - ネスト リスト1_2
-- リスト2
-  - ネスト リスト2_1
-    - ネスト リスト2_1_1
-    - ネスト リスト2_1_2
-  - ネスト リスト2_2
-- リスト3
-  - ネスト リスト3_1
-    - ネスト リスト3_1_1
-    - ネスト リスト3_1_2
-  - ネスト リスト3_2
-    - ネスト リスト3_2_1
-    - ネスト リスト3_2_2
-''';
+// String markdown = '''
+// # root
+// - リスト1
+//   - ネスト リスト1_1
+//     - ネスト リスト1_1_1
+//     - ネスト リスト1_1_2
+//   - ネスト リスト1_2
+// - リスト2
+//   - ネスト リスト2_1
+//     - ネスト リスト2_1_1
+//     - ネスト リスト2_1_2
+//   - ネスト リスト2_2
+// - リスト3
+//   - ネスト リスト3_1
+//     - ネスト リスト3_1_1
+//     - ネスト リスト3_1_2
+//   - ネスト リスト3_2
+//     - ネスト リスト3_2_1
+//     - ネスト リスト3_2_2
+// ''';
 
 void main() => runApp(MyApp());
 
@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.teal,
@@ -87,8 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addNote() {
     setState(() {
-      // _noteList.add('');
-      _noteList.add(markdown);
+      _noteList.add('');
+      // _noteList.add(markdown);
       _currentIndex = _noteList.length - 1;
       storeNoteList();
       Navigator.of(context).push(MaterialPageRoute<void>(
