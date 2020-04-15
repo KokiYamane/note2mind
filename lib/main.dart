@@ -25,6 +25,10 @@ import 'package:note2mind/Mindmap.dart';
 //     - ネスト リスト3_2_1
 //     - ネスト リスト3_2_2
 // ''';
+String markdown = '''
+# title
+- category1
+''';
 
 void main() => runApp(MyApp());
 
@@ -88,8 +92,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addNote() {
     setState(() {
-      _noteList.add('');
-      // _noteList.add(markdown);
+      // _noteList.add('');
+      _noteList.add(markdown);
       _currentIndex = _noteList.length - 1;
       storeNoteList();
       Navigator.of(context).push(MaterialPageRoute<void>(
@@ -141,17 +145,17 @@ class _MyHomePageState extends State<MyHomePage> {
       child: DragTarget<int>(
         builder: (context, candidateData, rejectedData) {
           return LongPressDraggable<int>(
-            data: index,
-            child: GestureDetector(
-              onTap: () {
-                _currentIndex = index;
-                Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                  return TreeEdit(_noteList[_currentIndex], _onChanged);
-                }));
-              },
-              child: _buildCard(root, index)),
-            feedback: _buildCard(root, index));
+              data: index,
+              child: GestureDetector(
+                  onTap: () {
+                    _currentIndex = index;
+                    Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (BuildContext context) {
+                      return TreeEdit(_noteList[_currentIndex], _onChanged);
+                    }));
+                  },
+                  child: _buildCard(root, index)),
+              feedback: _buildCard(root, index));
         },
         onAccept: (moveIndex) {
           String movingItem = _noteList[moveIndex];

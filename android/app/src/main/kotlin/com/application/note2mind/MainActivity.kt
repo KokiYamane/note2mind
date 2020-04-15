@@ -1,4 +1,4 @@
-package com.application.note2mind
+package com.example.note2mind
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity
