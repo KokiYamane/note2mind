@@ -6,30 +6,34 @@ import 'package:note2mind/Node.dart';
 import 'package:note2mind/TreeEdit.dart';
 import 'package:note2mind/Mindmap.dart';
 
-String markdown = '''
-# root
-- リスト1
-  - ネスト リスト1_1
-    - ネスト リスト1_1_1
-    - ネスト リスト1_1_2
-  - ネスト リスト1_2
-- リスト2
-  - ネスト リスト2_1
-    - ネスト リスト2_1_1
-    - ネスト リスト2_1_2
-  - ネスト リスト2_2
-- リスト3
-  - ネスト リスト3_1
-    - ネスト リスト3_1_1
-    - ネスト リスト3_1_2
-  - ネスト リスト3_2
-    - ネスト リスト3_2_1
-    - ネスト リスト3_2_2
-''';
 // String markdown = '''
-// # title
-// - category1
+// # Central Topic
+// - subtopic1
+//   - subtopic1_1
+//     - related idea1_1_1
+//     - related idea1_1_2
+//   - subtopic1_2
+//     - related idea3_1_1
+//     - related idea3_1_2
+// - subtopic2
+//   - subtopic2_1
+//     - related idea2_1_1
+//     - related idea2_1_2
+//   - subtopic2_2
+//     - related idea3_1_1
+//     - related idea3_1_2
+// - subtopic3
+//   - subtopic3_1
+//     - related idea3_1_1
+//     - related idea3_1_2
+//   - subtopic3_2
+//     - related idea3_2_1
+//     - related idea3_2_2
 // ''';
+String markdown = '''
+# Central Topic
+- subtopic1
+''';
 
 void main() => runApp(MyApp());
 
@@ -69,8 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     this.loadNoteList();
 
-    FirebaseAdMob.instance
-        .initialize(appId: appID);
+    FirebaseAdMob.instance.initialize(appId: appID);
 
     _bannerAd = buildBannerAd();
     _bannerAd
@@ -87,18 +90,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
-      child: Scaffold(
-        appBar: AppBar(title: Text(widget.title)),
-        // drawer: _buildDrawer(),
-        body: _buildGrid(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _addNote,
-          tooltip: 'add new note',
-          child: Icon(Icons.add),
-        ),
-      )
-    );
+        margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
+        child: Scaffold(
+          appBar: AppBar(title: Text(widget.title)),
+          // drawer: _buildDrawer(),
+          body: _buildGrid(),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _addNote,
+            tooltip: 'add new note',
+            child: Icon(Icons.add),
+          ),
+        ));
   }
 
   void loadNoteList() async {
@@ -227,41 +229,44 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      child: ListView(
-        children: <Widget>[
-          UserAccountsDrawerHeader(
-            accountName: Text('Raja'),
-            accountEmail: Text('testemail@test.com'),
-            currentAccountPicture: CircleAvatar(
-              backgroundImage: NetworkImage('http://i.pravatar.cc/300'),
-            ),
-          ),
-          Text('memu'),
-        ],
-      ),
+  // Widget _buildDrawer() {
+  //   return Drawer(
+  //     child: ListView(
+  //       children: <Widget>[
+  //         UserAccountsDrawerHeader(
+  //           accountName: Text('Raja'),
+  //           accountEmail: Text('testemail@test.com'),
+  //           currentAccountPicture: CircleAvatar(
+  //             backgroundImage: NetworkImage('http://i.pravatar.cc/300'),
+  //           ),
+  //         ),
+  //         Text('memu'),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  MobileAdTargetingInfo getTargetingInfo() {
+    return MobileAdTargetingInfo(
+      keywords: <String>['flutterio', 'beautiful apps'],
+      contentUrl: 'https://flutter.io',
+      childDirected: false,
+      testDevices: <String>[], // Android emulators are considered test devices
+      // birthday: DateTime.now(),
+      // designedForFamilies: false,
+      // gender: MobileAdGender.male, // or female, unknown
     );
   }
-}
 
-MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
-  keywords: <String>['flutterio', 'beautiful apps'],
-  contentUrl: 'https://flutter.io',
-  childDirected: false,
-  testDevices: <String>[], // Android emulators are considered test devices
-  // birthday: DateTime.now(),
-  // designedForFamilies: false,
-  // gender: MobileAdGender.male, // or female, unknown
-);
-
-BannerAd buildBannerAd() {
-  return BannerAd(
-    adUnitId: BannerAd.testAdUnitId,
-    size: AdSize.fullBanner,
-    targetingInfo: targetingInfo,
-    listener: (MobileAdEvent event) {
-      print("BannerAd event $event");
-    },
-  );
+  BannerAd buildBannerAd() {
+    return BannerAd(
+      // adUnitId: BannerAd.testAdUnitId,
+      adUnitId: adUnitID,
+      size: AdSize.fullBanner,
+      targetingInfo: getTargetingInfo(),
+      listener: (MobileAdEvent event) {
+        print("BannerAd event $event");
+      },
+    );
+  }
 }

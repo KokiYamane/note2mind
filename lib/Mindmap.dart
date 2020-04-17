@@ -38,7 +38,6 @@ class MindmapPage extends StatelessWidget {
     return AppBar(
       title: Text(_root.title),
       actions: <Widget>[
-        // IconButton(icon: Icon(Icons.save), onPressed: () {}),
         IconButton(
           icon: Icon(Icons.share),
           onPressed: () async {
@@ -83,7 +82,6 @@ class _MindmapState extends State<Mindmap> {
 
     CustomPaint customPainter = CustomPaint(
       painter: MindmapPainter(widget.root),
-      // size: Size(400 * maxLevel, 300 * maxLevel),
       size: Size(800 * maxLevel, 600 * maxLevel),
     );
 
@@ -162,16 +160,20 @@ class MindmapPainter extends CustomPainter {
         fontSize: fontSize,
         fontWeight: FontWeight.w500,
         color: Colors.black);
-    TextSpan testStyledSpan = TextSpan(text: text, style: textStyle);
-    TextPainter textPainter =
-        TextPainter(text: testStyledSpan, textDirection: TextDirection.ltr);
+    TextSpan testStyledSpan = TextSpan(
+        text: text,
+        style: textStyle);
+    TextPainter textPainter = TextPainter(
+        text: testStyledSpan,
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr);
     textPainter.layout(maxWidth: 200.0);
     Offset toCenter =
         offset - Offset(textPainter.width / 2, textPainter.height / 2);
 
     double padding = 5.0;
-    Size rectSize =
-        Size(textPainter.width + 2 * padding, textPainter.height + 2 * padding);
+    Size rectSize = Size(textPainter.width + 2 * padding,
+                         textPainter.height + 2 * padding);
     Rect rect = toCenter - Offset(padding, padding) & rectSize;
     RRect rrect = RRect.fromRectXY(rect, 12.0, 12.0);
     Paint paintWhite = Paint()..color = _backgroundColor;
@@ -190,8 +192,6 @@ class MindmapPainter extends CustomPainter {
 
   Offset _getOffset(
       int level, double start, double range, Node node, int index) {
-    // double rx = 150.0 * (level + 1);
-    // double ry = 100.0 * (level + 1);
     double rx = 300.0 * (level + 1);
     double ry = 200.0 * (level + 1);
     double step = range / node.children.length;
@@ -209,6 +209,6 @@ class MindmapPainter extends CustomPainter {
     else if (level < 3)
       return 30.0 - 5.0 * level;
     else
-      return 15;
+      return 20;
   }
 }
