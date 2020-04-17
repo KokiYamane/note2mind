@@ -26,5 +26,7 @@ void main() {
     print(root2.writeMarkdown());
 
     print(root2.getNodeNum().toString());
+    print(root.getMaxLevel().toString());
+    print(root2.getMaxLevel().toString());
   });
 }

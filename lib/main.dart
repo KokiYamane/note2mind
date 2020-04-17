@@ -1,34 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 
 import 'package:note2mind/Node.dart';
 import 'package:note2mind/TreeEdit.dart';
 import 'package:note2mind/Mindmap.dart';
 
-// String markdown = '''
-// # root
-// - リスト1
-//   - ネスト リスト1_1
-//     - ネスト リスト1_1_1
-//     - ネスト リスト1_1_2
-//   - ネスト リスト1_2
-// - リスト2
-//   - ネスト リスト2_1
-//     - ネスト リスト2_1_1
-//     - ネスト リスト2_1_2
-//   - ネスト リスト2_2
-// - リスト3
-//   - ネスト リスト3_1
-//     - ネスト リスト3_1_1
-//     - ネスト リスト3_1_2
-//   - ネスト リスト3_2
-//     - ネスト リスト3_2_1
-//     - ネスト リスト3_2_2
-// ''';
 String markdown = '''
-# title
-- category1
+# root
+- リスト1
+  - ネスト リスト1_1
+    - ネスト リスト1_1_1
+    - ネスト リスト1_1_2
+  - ネスト リスト1_2
+- リスト2
+  - ネスト リスト2_1
+    - ネスト リスト2_1_1
+    - ネスト リスト2_1_2
+  - ネスト リスト2_2
+- リスト3
+  - ネスト リスト3_1
+    - ネスト リスト3_1_1
+    - ネスト リスト3_1_2
+  - ネスト リスト3_2
+    - ネスト リスト3_2_1
+    - ネスト リスト3_2_2
 ''';
+// String markdown = '''
+// # title
+// - category1
+// ''';
 
 void main() => runApp(MyApp());
 
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'note2mind',
       theme: ThemeData(
         primarySwatch: Colors.teal,
       ),
@@ -59,25 +60,44 @@ class _MyHomePageState extends State<MyHomePage> {
   var _noteList = List<String>();
   var _currentIndex = -1;
 
+  static const adUnitID = 'ca-app-pub-2711901930280470/7756499383';
+  static const appID = 'ca-app-pub-2711901930280470~3980905909';
+  BannerAd _bannerAd;
+
   @override
   void initState() {
     super.initState();
     this.loadNoteList();
+
+    FirebaseAdMob.instance
+        .initialize(appId: appID);
+
+    _bannerAd = buildBannerAd();
+    _bannerAd
+      ..load()
+      ..show();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _bannerAd?.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      // drawer: _buildDrawer(),
-      body: _buildGrid(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addNote,
-        tooltip: 'add new note',
-        child: Icon(Icons.add),
-      ),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
+      child: Scaffold(
+        appBar: AppBar(title: Text(widget.title)),
+        // drawer: _buildDrawer(),
+        body: _buildGrid(),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _addNote,
+          tooltip: 'add new note',
+          child: Icon(Icons.add),
+        ),
+      )
     );
   }
 
@@ -92,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addNote() {
     setState(() {
-      // _noteList.add('');
       _noteList.add(markdown);
       _currentIndex = _noteList.length - 1;
       storeNoteList();
@@ -208,20 +227,41 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // Widget _buildDrawer() {
-  //   return Drawer(
-  //     child: ListView(
-  //       children: <Widget>[
-  //         UserAccountsDrawerHeader(
-  //           accountName: Text('Raja'),
-  //           accountEmail: Text('testemail@test.com'),
-  //           currentAccountPicture: CircleAvatar(
-  //             backgroundImage: NetworkImage('http://i.pravatar.cc/300'),
-  //           ),
-  //         ),
-  //         Text('memu'),
-  //       ],
-  //     ),
-  //   );
-  // }
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        children: <Widget>[
+          UserAccountsDrawerHeader(
+            accountName: Text('Raja'),
+            accountEmail: Text('testemail@test.com'),
+            currentAccountPicture: CircleAvatar(
+              backgroundImage: NetworkImage('http://i.pravatar.cc/300'),
+            ),
+          ),
+          Text('memu'),
+        ],
+      ),
+    );
+  }
+}
+
+MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
+  keywords: <String>['flutterio', 'beautiful apps'],
+  contentUrl: 'https://flutter.io',
+  childDirected: false,
+  testDevices: <String>[], // Android emulators are considered test devices
+  // birthday: DateTime.now(),
+  // designedForFamilies: false,
+  // gender: MobileAdGender.male, // or female, unknown
+);
+
+BannerAd buildBannerAd() {
+  return BannerAd(
+    adUnitId: BannerAd.testAdUnitId,
+    size: AdSize.fullBanner,
+    targetingInfo: targetingInfo,
+    listener: (MobileAdEvent event) {
+      print("BannerAd event $event");
+    },
+  );
 }

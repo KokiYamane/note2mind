@@ -16,9 +16,12 @@ class TreeEdit extends StatelessWidget {
   Widget build(BuildContext context) {
     final Node root = Node.readMarkdown(_current);
 
-    return Scaffold(
-      appBar: _buildAppBar(context, root),
-      body: TreeEditField(root: root, onChanged: _onChanged),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
+      child: Scaffold(
+        appBar: _buildAppBar(context, root),
+        body: TreeEditField(root: root, onChanged: _onChanged),
+      )
     );
   }
 
@@ -50,11 +53,6 @@ class TreeEdit extends StatelessWidget {
             );
           },
         ),
-        // IconButton(
-        //   icon: Icon(Icons.check),
-        //   // onPressed: () => FocusScope.of(context).requestFocus(FocusNode()),
-        //   onPressed: () => root.getFocusNode().requestFocus()
-        // ),
       ],
       leading: IconButton(
         icon: Icon(Icons.arrow_back),

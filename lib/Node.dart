@@ -95,6 +95,16 @@ class Node {
     return sum;
   }
 
+  int getMaxLevel([int level = 0, int maxLevel = 0]) {
+    if (children.length == 0) return level;
+
+    for (int i = 0; i < children.length; i++) {
+      int maxChild = children[i].getMaxLevel(level+1, maxLevel);
+      if (maxLevel < maxChild) maxLevel = maxChild;
+    }
+    return maxLevel;
+  }
+
   Node getParent() => _parent;
 
   FocusNode getFocusNode() => _focusNode;

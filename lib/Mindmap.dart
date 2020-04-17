@@ -18,16 +18,20 @@ class MindmapPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // final Size size = MediaQuery.of(context).size;
+
     return Scaffold(
-      appBar: _buildAppBar(context),
-      body: Zoom(
-        width: 1000,
-        height: 1000,
-        initZoom: 0.0,
-        child: RepaintBoundary(
-          key: _mindmapKey,
-          child: Mindmap(root: _root),
-        )));
+        appBar: _buildAppBar(context),
+        body: Zoom(
+            // width: size.width,
+            // height: size.height,
+            width: 1000,
+            height: 1000,
+            initZoom: 0.0,
+            child: RepaintBoundary(
+              key: _mindmapKey,
+              child: Mindmap(root: _root),
+            )));
   }
 
   Widget _buildAppBar(BuildContext context) {
@@ -72,12 +76,17 @@ class Mindmap extends StatefulWidget {
 }
 
 class _MindmapState extends State<Mindmap> {
+
   @override
   Widget build(BuildContext context) {
+    final double maxLevel = widget.root.getMaxLevel().toDouble();
+
     CustomPaint customPainter = CustomPaint(
       painter: MindmapPainter(widget.root),
-      size: Size(1500, 1000),
+      // size: Size(400 * maxLevel, 300 * maxLevel),
+      size: Size(800 * maxLevel, 600 * maxLevel),
     );
+
     return ClipRect(
         child: FittedBox(
             child: SizedBox(
@@ -89,19 +98,20 @@ class _MindmapState extends State<Mindmap> {
 }
 
 class MindmapPainter extends CustomPainter {
-  Node _root;
-  Canvas _canvas;
-  Size _size;
   MindmapPainter(this._root);
 
-  List<Color> colors = [
+  final Node _root;
+  Canvas _canvas;
+  Size _size;
+
+  final List<Color> colors = [
     Colors.red,
     Colors.green,
     Colors.blue,
     Colors.orange,
   ];
 
-  Color _backgroundColor = Colors.white;
+  final Color _backgroundColor = Colors.white;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -124,11 +134,12 @@ class MindmapPainter extends CustomPainter {
       int level = 0,
       Color boxColor = Colors.black]) {
     node.children.asMap().forEach((index, child) {
+      Offset childOffset = _getOffset(level, start, range, node, index);
+
       double step = range / node.children.length;
       double startChild = start + step * index;
       if (level == 0) startChild = start + step * index - step / 2;
 
-      Offset childOffset = _getOffset(level, start, range, node, index);
       Color childBoxColor = boxColor;
       if (level == 0) {
         int step = (colors.length ~/ node.children.length);
@@ -137,19 +148,11 @@ class MindmapPainter extends CustomPainter {
       }
 
       _canvas.drawLine(offset, childOffset, Paint());
-      _nodePainter(child, childOffset, startChild,
-                   step, level + 1, childBoxColor);
+      _nodePainter(
+          child, childOffset, startChild, step, level + 1, childBoxColor);
     });
 
-    double fontSize;
-    if (level == 0)
-      fontSize = 50.0;
-    else if (level < 3)
-      fontSize = 30.0 - 5.0 * level;
-    else
-      fontSize = 15;
-
-    _paintTextBox(node.title, offset, fontSize, boxColor);
+    _paintTextBox(node.title, offset, _getFontSize(level), boxColor);
   }
 
   void _paintTextBox(
@@ -187,8 +190,10 @@ class MindmapPainter extends CustomPainter {
 
   Offset _getOffset(
       int level, double start, double range, Node node, int index) {
-    double rx = 150.0 * (level + 1);
-    double ry = 100.0 * (level + 1);
+    // double rx = 150.0 * (level + 1);
+    // double ry = 100.0 * (level + 1);
+    double rx = 300.0 * (level + 1);
+    double ry = 200.0 * (level + 1);
     double step = range / node.children.length;
     double theta = start + step / 2 + index * step;
     if (level == 0) theta = start + index * step;
@@ -196,5 +201,14 @@ class MindmapPainter extends CustomPainter {
     double dy = _size.height / 2 + ry * sin(theta);
 
     return Offset(dx, dy);
+  }
+
+  double _getFontSize(int level) {
+    if (level == 0)
+      return 50.0;
+    else if (level < 3)
+      return 30.0 - 5.0 * level;
+    else
+      return 15;
   }
 }
