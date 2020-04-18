@@ -75,7 +75,6 @@ class Mindmap extends StatefulWidget {
 }
 
 class _MindmapState extends State<Mindmap> {
-
   @override
   Widget build(BuildContext context) {
     final double maxLevel = widget.root.getMaxLevel().toDouble();
@@ -103,10 +102,25 @@ class MindmapPainter extends CustomPainter {
   Size _size;
 
   final List<Color> colors = [
+    Colors.pink,
     Colors.red,
-    Colors.green,
-    Colors.blue,
+    Colors.deepOrange,
     Colors.orange,
+    Colors.amber,
+    Colors.yellow,
+    Colors.lime,
+    Colors.lightGreen,
+    Colors.green,
+    Colors.teal,
+    Colors.cyan,
+    Colors.lightBlue,
+    Colors.blue,
+    Colors.indigo,
+    Colors.purple,
+    Colors.deepPurple,
+    Colors.blueGrey,
+    Colors.brown,
+    Colors.grey,
   ];
 
   final Color _backgroundColor = Colors.white;
@@ -131,10 +145,11 @@ class MindmapPainter extends CustomPainter {
       double range = 2 * pi,
       int level = 0,
       Color boxColor = Colors.black]) {
+    double step = range / node.children.length;
+    if (level == 0 && node.children.length % 2 == 0) start += step / 2;
     node.children.asMap().forEach((index, child) {
       Offset childOffset = _getOffset(level, start, range, node, index);
 
-      double step = range / node.children.length;
       double startChild = start + step * index;
       if (level == 0) startChild = start + step * index - step / 2;
 
@@ -160,9 +175,7 @@ class MindmapPainter extends CustomPainter {
         fontSize: fontSize,
         fontWeight: FontWeight.w500,
         color: Colors.black);
-    TextSpan testStyledSpan = TextSpan(
-        text: text,
-        style: textStyle);
+    TextSpan testStyledSpan = TextSpan(text: text, style: textStyle);
     TextPainter textPainter = TextPainter(
         text: testStyledSpan,
         textAlign: TextAlign.center,
@@ -172,8 +185,8 @@ class MindmapPainter extends CustomPainter {
         offset - Offset(textPainter.width / 2, textPainter.height / 2);
 
     double padding = 5.0;
-    Size rectSize = Size(textPainter.width + 2 * padding,
-                         textPainter.height + 2 * padding);
+    Size rectSize =
+        Size(textPainter.width + 2 * padding, textPainter.height + 2 * padding);
     Rect rect = toCenter - Offset(padding, padding) & rectSize;
     RRect rrect = RRect.fromRectXY(rect, 12.0, 12.0);
     Paint paintWhite = Paint()..color = _backgroundColor;
