@@ -6,34 +6,34 @@ import 'package:note2mind/Node.dart';
 import 'package:note2mind/TreeEdit.dart';
 import 'package:note2mind/Mindmap.dart';
 
-// String markdown = '''
-// # Central Topic
-// - subtopic1
-//   - subtopic1_1
-//     - related idea1_1_1
-//     - related idea1_1_2
-//   - subtopic1_2
-//     - related idea3_1_1
-//     - related idea3_1_2
-// - subtopic2
-//   - subtopic2_1
-//     - related idea2_1_1
-//     - related idea2_1_2
-//   - subtopic2_2
-//     - related idea3_1_1
-//     - related idea3_1_2
-// - subtopic3
-//   - subtopic3_1
-//     - related idea3_1_1
-//     - related idea3_1_2
-//   - subtopic3_2
-//     - related idea3_2_1
-//     - related idea3_2_2
-// ''';
 String markdown = '''
 # Central Topic
 - subtopic1
+  - subtopic1_1
+    - related idea1_1_1
+    - related idea1_1_2
+  - subtopic1_2
+    - related idea3_1_1
+    - related idea3_1_2
+- subtopic2
+  - subtopic2_1
+    - related idea2_1_1
+    - related idea2_1_2
+  - subtopic2_2
+    - related idea3_1_1
+    - related idea3_1_2
+- subtopic3
+  - subtopic3_1
+    - related idea3_1_1
+    - related idea3_1_2
+  - subtopic3_2
+    - related idea3_2_1
+    - related idea3_2_2
 ''';
+// String markdown = '''
+// # Central Topic
+// - subtopic1
+// ''';
 
 void main() => runApp(MyApp());
 
@@ -151,6 +151,26 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Widget _buildCard(Node root, int index) {
+    return Card(
+        child: Container(
+            height: 150,
+            width: 150,
+            child: Column(children: <Widget>[
+              Expanded(
+                child: ListTile(
+                  title: Text(
+                    root.title,
+                    maxLines: 2,
+                  ),
+                  trailing: _buildPopupMenu(index),
+              )),
+              Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Mindmap(root: root)),
+            ])));
+  }
+
   Widget _buildWrappedCard(String content, int index) {
     Node root = Node.readMarkdown(content);
 
@@ -189,27 +209,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildCard(Node root, int index) {
-    return Card(
-        child: Container(
-            height: 150,
-            width: 150,
-            child: Column(children: <Widget>[
-              Expanded(
-                  child: ListTile(
-                title: Text(
-                  root.title,
-                  maxLines: 2,
-                ),
-                trailing: _buildPopuMenu(index),
-              )),
-              Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Mindmap(root: root)),
-            ])));
-  }
-
-  Widget _buildPopuMenu(int index) {
+  Widget _buildPopupMenu(int index) {
     return PopupMenuButton<String>(
       onSelected: (String s) {
         if (s == 'copy') {

@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:note2mind/Node.dart';
 import 'package:note2mind/Mindmap.dart';
 
+List<Widget> widgetList;
+Node currentNode;
+
 class TreeEdit extends StatelessWidget {
   final String _current;
   final Function _onChanged;
@@ -17,12 +20,11 @@ class TreeEdit extends StatelessWidget {
     final Node root = Node.readMarkdown(_current);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
-      child: Scaffold(
-        appBar: _buildAppBar(context, root),
-        body: TreeEditField(root: root, onChanged: _onChanged),
-      )
-    );
+        margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
+        child: Scaffold(
+          appBar: _buildAppBar(context, root),
+          body: TreeEditField(root: root, onChanged: _onChanged),
+        ));
   }
 
   Widget _buildAppBar(BuildContext context, Node root) {
@@ -34,9 +36,7 @@ class TreeEdit extends StatelessWidget {
           border: InputBorder.none,
         ),
         style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
-            color: Colors.white),
+            fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
         onChanged: (text) {
           root.title = text;
           _onChanged(root.writeMarkdown());
@@ -46,11 +46,10 @@ class TreeEdit extends StatelessWidget {
         IconButton(
           icon: Icon(Icons.image),
           onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (BuildContext context) {
-                return MindmapPage(root);
-              })
-            );
+            Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
+              return MindmapPage(root);
+            }));
           },
         ),
       ],
@@ -73,9 +72,50 @@ class TreeEditField extends StatefulWidget {
 }
 
 class _TreeEditFieldState extends State<TreeEditField> {
-  Node currentNode;
-  bool dustbin = false;
+  _buildData(Node node, [int level = 0]) {
+    node.children.forEach((child) {
+      widgetList
+          .add(Line(root: child, level: level, onChanged: widget.onChanged));
+      _buildData(child, level + 1);
+    });
+  }
 
+  @override
+  void initState() {
+    super.initState();
+
+    widgetList = new List<Widget>();
+    _buildData(widget.root);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Timer(const Duration(milliseconds: 200), _onTimer);
+
+    return SingleChildScrollView(
+        padding: EdgeInsets.all(10.0),
+        child: Column(
+          children: widgetList,
+        ));
+  }
+
+  void _onTimer() {
+    if (currentNode != null) currentNode.getFocusNode().requestFocus();
+  }
+}
+
+class Line extends StatefulWidget {
+  Line({Key key, this.root, this.level, this.onChanged}) : super(key: key);
+
+  final Node root;
+  final int level;
+  final Function onChanged;
+
+  @override
+  _LineState createState() => _LineState();
+}
+
+class _LineState extends State<Line> {
   @override
   void initState() {
     super.initState();
@@ -83,93 +123,16 @@ class _TreeEditFieldState extends State<TreeEditField> {
 
   @override
   Widget build(BuildContext context) {
-    Timer(const Duration(milliseconds: 200), _onTimer);
-
-    return Scaffold(
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: _createField(widget.root),
+    return Dismissible(
+        key: UniqueKey(),
+        direction: DismissDirection.startToEnd,
+        child: Container(
+          height: 30,
+          child: _buildWrappedLine(widget.root),
         ),
-        floatingActionButton: Visibility(
-          child: DragTarget<Node>(
-            builder: (context, candidateData, rejectedData) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  color: Colors.grey,
-                  child: Icon(Icons.delete),
-                )
-              );
-            },
-            onAccept: (thisNode) {
-              setState(() {
-                thisNode.remove();
-              });
-              widget.onChanged(widget.root.writeMarkdown());
-            },
-          ),
-          visible: dustbin,
-        ));
-  }
-
-  void _onTimer() {
-    if (currentNode != null) currentNode.getFocusNode().requestFocus();
-  }
-
-  Widget _createField(Node node, [int level = 0]) {
-    Widget childrenColumn = Column(
-        children: node.children.map<Widget>((Node child) {
-      return _createField(child, level + 1);
-    }).toList());
-
-    List<Widget> mainWidgetList = new List<Widget>();
-    if (level == 0) {
-      mainWidgetList.add(childrenColumn);
-    } else {
-      mainWidgetList.add(_buildWrappedLine(node));
-      mainWidgetList.add(Container(
-          margin: const EdgeInsets.fromLTRB(30, 0, 0, 0),
-          child: childrenColumn));
-    }
-
-    return DragTarget<Node>(
-      builder: (context, candidateData, rejectedData) {
-        return LongPressDraggable<Node>(
-          data: node,
-          child: Column(children: mainWidgetList),
-          feedback: Card(
-              child: Container(
-                  height: 50 * node.getNodeNum().toDouble(),
-                  width: 300,
-                  child: Column(children: mainWidgetList))),
-          onDragStarted: () {
-            setState(() {
-              dustbin = true;
-            });
-          },
-          onDragEnd: (draggableDetails) {
-            setState(() {
-              dustbin = false;
-            });
-          },
-        );
-      },
-      onAccept: (thisNode) {
-        setState(() {
-          thisNode.move(node);
+        onDismissed: (direction) {
+          setState(() {});
         });
-        widget.onChanged(widget.root.writeMarkdown());
-      },
-    );
-  }
-
-  Widget _buildWrappedLine(Node node) {
-    return Row(children: <Widget>[
-      Icon(Icons.arrow_right),
-      Expanded(child: _buildLine(node)),
-    ]);
   }
 
   Widget _buildLine(Node node) {
@@ -187,10 +150,48 @@ class _TreeEditFieldState extends State<TreeEditField> {
         Node newNode;
         setState(() {
           newNode = node.getParent().insertChild(node, '');
+          // widgetList.add(Line(
+          //     root: newNode, level: widget.level, onChanged: widget.onChanged));
+          widgetList.insert(widgetList.indexOf(widget) + 1,
+            Line(root: newNode, level: widget.level + 1, onChanged: widget.onChanged));
         });
         currentNode = newNode;
         currentNode.getFocusNode().requestFocus();
       },
     );
   }
+
+  Widget _buildWrappedLine(Node node) {
+    return Row(children: <Widget>[
+      SpaceBox.width(30 * widget.level.toDouble()),
+      Icon(
+        Icons.arrow_right,
+        color: Colors.grey[300],
+      ),
+      Expanded(child: _buildLine(node)),
+      Visibility(
+        child: IconButton(
+          icon: Icon(
+            Icons.clear,
+            color: Colors.grey[700],
+          ),
+          onPressed: () {
+            setState(() {
+              node.remove();
+            });
+            widget.onChanged(widget.root.writeMarkdown());
+          },
+        ),
+        visible: false,
+      )
+    ]);
+  }
+}
+
+class SpaceBox extends SizedBox {
+  SpaceBox({double width = 8, double height = 8})
+      : super(width: width, height: height);
+
+  SpaceBox.width([double value = 8]) : super(width: value);
+  SpaceBox.height([double value = 8]) : super(height: value);
 }
