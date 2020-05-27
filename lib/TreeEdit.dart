@@ -72,10 +72,11 @@ class TreeEditField extends StatefulWidget {
 }
 
 class _TreeEditFieldState extends State<TreeEditField> {
-  _buildData(Node node, [int level = 0]) {
+  List<Widget> widgetList = new List<Widget>();
+
+  void _buildData(Node node, [int level = 0]) {
     node.children.forEach((child) {
-      widgetList
-          .add(Line(root: child, level: level, onChanged: widget.onChanged));
+      widgetList.add(_buildWrappedLine(child, level));
       _buildData(child, level + 1);
     });
   }
@@ -84,7 +85,6 @@ class _TreeEditFieldState extends State<TreeEditField> {
   void initState() {
     super.initState();
 
-    widgetList = new List<Widget>();
     _buildData(widget.root);
   }
 
@@ -102,89 +102,77 @@ class _TreeEditFieldState extends State<TreeEditField> {
   void _onTimer() {
     if (currentNode != null) currentNode.getFocusNode().requestFocus();
   }
-}
-
-class Line extends StatefulWidget {
-  Line({Key key, this.root, this.level, this.onChanged}) : super(key: key);
-
-  final Node root;
-  final int level;
-  final Function onChanged;
-
-  @override
-  _LineState createState() => _LineState();
-}
-
-class _LineState extends State<Line> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dismissible(
-        key: UniqueKey(),
-        direction: DismissDirection.startToEnd,
-        child: Container(
-          height: 30,
-          child: _buildWrappedLine(widget.root),
-        ),
-        onDismissed: (direction) {
-          setState(() {});
-        });
-  }
 
   Widget _buildLine(Node node) {
     return TextField(
-      controller: TextEditingController(text: node.title),
+      controller: TextEditingController(text: ' ' + node.title),
       focusNode: node.getFocusNode(),
       decoration: InputDecoration(
         border: InputBorder.none,
       ),
       onChanged: (text) {
-        node.title = text;
+        if (text.isEmpty) {
+          widgetList.removeAt(widgetList.length);
+          setState(() {
+            node.remove();
+          });
+        } else
+          node.title = text;
+        // node.title = text;
         widget.onChanged(widget.root.writeMarkdown());
       },
       onSubmitted: (text) {
         Node newNode;
         setState(() {
           newNode = node.getParent().insertChild(node, '');
-          // widgetList.add(Line(
-          //     root: newNode, level: widget.level, onChanged: widget.onChanged));
-          widgetList.insert(widgetList.indexOf(widget) + 1,
-            Line(root: newNode, level: widget.level + 1, onChanged: widget.onChanged));
+          widgetList.add(_buildWrappedLine(newNode, newNode.getLevel()-1));
+          // widgetList.insert(widgetList.indexOf(widget) + 1,
+          //   _buildWrappedLine(newNode));
         });
         currentNode = newNode;
         currentNode.getFocusNode().requestFocus();
+        widget.onChanged(widget.root.writeMarkdown());
       },
     );
   }
 
-  Widget _buildWrappedLine(Node node) {
-    return Row(children: <Widget>[
-      SpaceBox.width(30 * widget.level.toDouble()),
-      Icon(
-        Icons.arrow_right,
-        color: Colors.grey[300],
-      ),
-      Expanded(child: _buildLine(node)),
-      Visibility(
-        child: IconButton(
-          icon: Icon(
-            Icons.clear,
-            color: Colors.grey[700],
-          ),
-          onPressed: () {
-            setState(() {
-              node.remove();
-            });
-            widget.onChanged(widget.root.writeMarkdown());
-          },
+  Widget _buildWrappedLine(Node node, int level) {
+    return Dismissible(
+        key: UniqueKey(),
+        // direction: DismissDirection.startToEnd,
+        child: Container(
+          height: 30,
+          child: Row(children: <Widget>[
+            SpaceBox.width(30 * level.toDouble()),
+            Icon(
+              Icons.arrow_right,
+              color: Colors.grey[300],
+            ),
+            Expanded(child: _buildLine(node)),
+            // Visibility(
+            //   child: IconButton(
+            //     icon: Icon(
+            //       Icons.clear,
+            //       color: Colors.grey[700],
+            //     ),
+            //     onPressed: () {
+            //       setState(() {
+            //         widgetList.removeAt(widgetList.length);
+            //         node.remove();
+            //       });
+            //       widget.onChanged(widget.root.writeMarkdown());
+            //     },
+            //   ),
+            //   visible: true,
+            // )
+          ]),
         ),
-        visible: false,
-      )
-    ]);
+        onDismissed: (direction) {
+          setState(() {
+            node.remove();
+          });
+          widget.onChanged(widget.root.writeMarkdown());
+        });
   }
 }
 

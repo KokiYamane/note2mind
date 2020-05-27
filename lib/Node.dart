@@ -95,11 +95,21 @@ class Node {
     return sum;
   }
 
+  int getLevel() {
+    int level = 0;
+    Node currentNode = this;
+    while (currentNode._parent != null) {
+      currentNode = currentNode._parent;
+      level++;
+    }
+    return level;
+  }
+
   int getMaxLevel([int level = 0, int maxLevel = 0]) {
     if (children.length == 0) return level;
 
     for (int i = 0; i < children.length; i++) {
-      int maxChild = children[i].getMaxLevel(level+1, maxLevel);
+      int maxChild = children[i].getMaxLevel(level + 1, maxLevel);
       if (maxLevel < maxChild) maxLevel = maxChild;
     }
     return maxLevel;

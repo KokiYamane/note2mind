@@ -112,6 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+
   void _addNote() {
     setState(() {
       _noteList.add(markdown);
@@ -164,7 +165,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     maxLines: 2,
                   ),
                   trailing: _buildPopupMenu(index),
-              )),
+                )
+              ),
               Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: Mindmap(root: root)),
