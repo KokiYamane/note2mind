@@ -1,19 +1,16 @@
-import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:note2mind/Node.dart';
 import 'package:note2mind/Mindmap.dart';
 
-List<Widget> widgetList;
-Node currentNode;
 
 class TreeEdit extends StatelessWidget {
   final String _current;
   final Function _onChanged;
+  final Function _onDispose;
 
-  TreeEdit(this._current, this._onChanged);
+  TreeEdit(this._current, this._onChanged, this._onDispose);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +20,8 @@ class TreeEdit extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
         child: Scaffold(
           appBar: _buildAppBar(context, root),
-          body: TreeEditField(root: root, onChanged: _onChanged),
+          body: TreeEditField(
+              root: root, onChanged: _onChanged, onDispose: _onDispose),
         ));
   }
 
@@ -31,7 +29,7 @@ class TreeEdit extends StatelessWidget {
     return AppBar(
       title: TextField(
         controller: TextEditingController(text: root.title),
-        focusNode: root.getFocusNode(),
+        // focusNode: root.getFocusNode(),
         decoration: InputDecoration(
           border: InputBorder.none,
         ),
@@ -62,21 +60,23 @@ class TreeEdit extends StatelessWidget {
 }
 
 class TreeEditField extends StatefulWidget {
-  TreeEditField({Key key, this.root, this.onChanged}) : super(key: key);
+  TreeEditField({Key key, this.root, this.onChanged, this.onDispose})
+      : super(key: key);
 
   final Node root;
   final Function onChanged;
+  final Function onDispose;
 
   @override
   _TreeEditFieldState createState() => _TreeEditFieldState();
 }
 
 class _TreeEditFieldState extends State<TreeEditField> {
-  List<Widget> widgetList = new List<Widget>();
+  List<NodeModel> _tree;
 
   void _buildData(Node node, [int level = 0]) {
     node.children.forEach((child) {
-      widgetList.add(_buildWrappedLine(child, level));
+      _tree.add(NodeModel(level: level, title: child.title));
       _buildData(child, level + 1);
     });
   }
@@ -85,93 +85,111 @@ class _TreeEditFieldState extends State<TreeEditField> {
   void initState() {
     super.initState();
 
+    _tree = List<NodeModel>();
     _buildData(widget.root);
   }
 
   @override
   Widget build(BuildContext context) {
-    Timer(const Duration(milliseconds: 200), _onTimer);
-
-    return SingleChildScrollView(
-        padding: EdgeInsets.all(10.0),
-        child: Column(
-          children: widgetList,
-        ));
+    return ReorderableListView(
+        onReorder: (int oldIndex, int newIndex) {
+          if (oldIndex < newIndex) newIndex -= 1;
+          final NodeModel node = _tree.removeAt(oldIndex);
+          setState(() {
+            _tree.insert(newIndex, node);
+          });
+          widget.onDispose(makeNote());
+        },
+        children: List.generate(_tree.length, (index) {
+          return _buildWrappedLine(_tree[index]);
+        }));
   }
 
-  void _onTimer() {
-    if (currentNode != null) currentNode.getFocusNode().requestFocus();
+  @override
+  void dispose() {
+    super.dispose();
+
+    widget.onDispose(makeNote());
   }
 
-  Widget _buildLine(Node node) {
+  String makeNote() {
+    String str = '# ' + widget.root.title + '\n';
+    _tree.forEach((node) {
+      for (int i = 0; i < node.level + 1; i++) {
+        if (i == node.level)
+          str += '- ';
+        else
+          str += '  ';
+      }
+      str += node.title + '\n';
+    });
+    debugPrint(str);
+    return str;
+  }
+
+  Widget _buildLine(NodeModel node) {
     return TextField(
       controller: TextEditingController(text: ' ' + node.title),
-      focusNode: node.getFocusNode(),
+      focusNode: node.focusNode,
       decoration: InputDecoration(
         border: InputBorder.none,
       ),
       onChanged: (text) {
         if (text.isEmpty) {
-          widgetList.removeAt(widgetList.length);
+          int index = _tree.indexOf(node);
+          index = (index != 0) ? index - 1 : 0;
           setState(() {
-            node.remove();
+            _tree.remove(node);
           });
+          _tree[index].focusNode.requestFocus();
         } else
-          node.title = text;
-        // node.title = text;
-        widget.onChanged(widget.root.writeMarkdown());
+          _tree[_tree.indexOf(node)].title = text;
       },
       onSubmitted: (text) {
-        Node newNode;
         setState(() {
-          newNode = node.getParent().insertChild(node, '');
-          widgetList.add(_buildWrappedLine(newNode, newNode.getLevel()-1));
-          // widgetList.insert(widgetList.indexOf(widget) + 1,
-          //   _buildWrappedLine(newNode));
+          _tree.insert(
+              _tree.indexOf(node) + 1,
+              NodeModel(title: '', level: node.level));
         });
-        currentNode = newNode;
-        currentNode.getFocusNode().requestFocus();
-        widget.onChanged(widget.root.writeMarkdown());
+        _tree[_tree.indexOf(node) + 1].focusNode.requestFocus();
       },
     );
   }
 
-  Widget _buildWrappedLine(Node node, int level) {
+  Widget _buildWrappedLine(NodeModel node) {
     return Dismissible(
         key: UniqueKey(),
-        // direction: DismissDirection.startToEnd,
-        child: Container(
-          height: 30,
-          child: Row(children: <Widget>[
-            SpaceBox.width(30 * level.toDouble()),
-            Icon(
-              Icons.arrow_right,
-              color: Colors.grey[300],
+        child: GestureDetector(
+            child: Container(
+              height: 30,
+              child: Row(children: <Widget>[
+                SpaceBox.width(30 * node.level.toDouble()),
+                Icon(
+                  Icons.arrow_right,
+                  color: Colors.grey[300],
+                ),
+                Expanded(child: _buildLine(node)),
+              ]),
             ),
-            Expanded(child: _buildLine(node)),
-            // Visibility(
-            //   child: IconButton(
-            //     icon: Icon(
-            //       Icons.clear,
-            //       color: Colors.grey[700],
-            //     ),
-            //     onPressed: () {
-            //       setState(() {
-            //         widgetList.removeAt(widgetList.length);
-            //         node.remove();
-            //       });
-            //       widget.onChanged(widget.root.writeMarkdown());
-            //     },
-            //   ),
-            //   visible: true,
-            // )
-          ]),
-        ),
+            onHorizontalDragEnd: (detail) {
+              int index = _tree.indexOf(node);
+              if (index == 0) return;
+
+              setState(() {
+                if (detail.primaryVelocity < 0 && _tree[index].level > 0) {
+                  _tree[index].level--;
+                } else if (0 < detail.primaryVelocity &&
+                    (_tree[index].level - _tree[index - 1].level) != 1) {
+                  _tree[index].level++;
+                }
+              });
+              widget.onDispose(makeNote());
+            }),
         onDismissed: (direction) {
           setState(() {
-            node.remove();
+            _tree.remove(node);
           });
-          widget.onChanged(widget.root.writeMarkdown());
+          widget.onDispose(makeNote());
         });
   }
 }
@@ -182,4 +200,15 @@ class SpaceBox extends SizedBox {
 
   SpaceBox.width([double value = 8]) : super(width: value);
   SpaceBox.height([double value = 8]) : super(height: value);
+}
+
+class NodeModel {
+  String title;
+  int level;
+  FocusNode focusNode = FocusNode();
+
+  NodeModel({
+    this.title,
+    this.level,
+  });
 }

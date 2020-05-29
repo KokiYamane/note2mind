@@ -1,10 +1,8 @@
-import 'package:flutter/widgets.dart';
-
 class Node {
   String title = '';
   List<Node> children = new List();
   Node _parent;
-  FocusNode _focusNode = FocusNode();
+  // FocusNode _focusNode = FocusNode();
 
   Node(this.title, [this._parent]);
 
@@ -117,7 +115,7 @@ class Node {
 
   Node getParent() => _parent;
 
-  FocusNode getFocusNode() => _focusNode;
+  // FocusNode getFocusNode() => _focusNode;
 
   String writeMarkdown([int level = 0]) {
     String str = '';

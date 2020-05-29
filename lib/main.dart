@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_admob/firebase_admob.dart';
+import 'package:reorderables/reorderables.dart';
 
 import 'package:note2mind/Node.dart';
 import 'package:note2mind/TreeEdit.dart';
@@ -120,7 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
       storeNoteList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context) {
-          return TreeEdit(_noteList[_currentIndex], _onChanged);
+          return TreeEdit(_noteList[_currentIndex], _onChanged, _onDispose);
         },
       ));
     });
@@ -133,6 +134,11 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _onDispose(String text) {
+    _noteList[_currentIndex] = text;
+    storeNoteList();
+  }
+
   void storeNoteList() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     const key = "note-list";
@@ -143,20 +149,37 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
+    // return GridView.count(
+    //   crossAxisCount: 2,
+    //   children: List.generate(_noteList.length, (idx) {
+    //     return _buildWrappedCard(_noteList[idx], idx);
+    //   }),
+    // );
+
+    return ReorderableWrap(
+      // spacing: 8.0,
+      // runSpacing: 4.0,
+      padding: const EdgeInsets.all(8),
+      onReorder: (int oldIndex, int newIndex) {
+        // if (oldIndex < newIndex) newIndex--;
+        final String note = _noteList.removeAt(oldIndex);
+        setState(() {
+          _noteList.insert(newIndex, note);
+        });
+      },
       children: List.generate(_noteList.length, (idx) {
-        String note = _noteList[idx];
-        return _buildWrappedCard(note, idx);
+        return _buildWrappedCard(_noteList[idx], idx);
       }),
     );
   }
 
   Widget _buildCard(Node root, int index) {
+    final Size size = MediaQuery.of(context).size;
+
     return Card(
         child: Container(
-            height: 150,
-            width: 150,
+            height: size.width / 2 - 16,
+            width: size.width / 2 - 16,
             child: Column(children: <Widget>[
               Expanded(
                 child: ListTile(
@@ -168,8 +191,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 )
               ),
               Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Mindmap(root: root)),
+                padding: const EdgeInsets.all(10.0),
+                child: Mindmap(root: root)),
             ])));
   }
 
@@ -185,29 +208,15 @@ class _MyHomePageState extends State<MyHomePage> {
         });
         storeNoteList();
       },
-      child: DragTarget<int>(
-        builder: (context, candidateData, rejectedData) {
-          return LongPressDraggable<int>(
-              data: index,
-              child: GestureDetector(
-                  onTap: () {
-                    _currentIndex = index;
-                    Navigator.of(context).push(MaterialPageRoute<void>(
-                        builder: (BuildContext context) {
-                      return TreeEdit(_noteList[_currentIndex], _onChanged);
-                    }));
-                  },
-                  child: _buildCard(root, index)),
-              feedback: _buildCard(root, index));
+      child: GestureDetector(
+        onTap: () {
+          _currentIndex = index;
+          Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (BuildContext context) {
+            return TreeEdit(_noteList[_currentIndex], _onChanged, _onDispose);
+          }));
         },
-        onAccept: (moveIndex) {
-          String movingItem = _noteList[moveIndex];
-          setState(() {
-            _noteList.removeAt(moveIndex);
-            _noteList.insert(index, movingItem);
-          });
-        },
-      ),
+        child: _buildCard(root, index)),
     );
   }
 
