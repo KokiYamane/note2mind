@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:note2mind/Node.dart';
 import 'package:note2mind/Mindmap.dart';
 
-
 class TreeEdit extends StatelessWidget {
   final String _current;
   final Function _onChanged;
@@ -72,21 +71,14 @@ class TreeEditField extends StatefulWidget {
 }
 
 class _TreeEditFieldState extends State<TreeEditField> {
-  List<NodeModel> _tree;
-
-  void _buildData(Node node, [int level = 0]) {
-    node.children.forEach((child) {
-      _tree.add(NodeModel(level: level, title: child.title));
-      _buildData(child, level + 1);
-    });
-  }
+  List<NodeModel> _tree = List<NodeModel>();
+  List<Widget> _lines = List<Widget>();
 
   @override
   void initState() {
     super.initState();
 
-    _tree = List<NodeModel>();
-    _buildData(widget.root);
+    _buildLines();
   }
 
   @override
@@ -95,14 +87,17 @@ class _TreeEditFieldState extends State<TreeEditField> {
         onReorder: (int oldIndex, int newIndex) {
           if (oldIndex < newIndex) newIndex -= 1;
           final NodeModel node = _tree.removeAt(oldIndex);
+          _lines.removeAt(oldIndex);
           setState(() {
             _tree.insert(newIndex, node);
+            _lines.insert(newIndex, _buildWrappedLine(node));
           });
           widget.onDispose(makeNote());
         },
-        children: List.generate(_tree.length, (index) {
-          return _buildWrappedLine(_tree[index]);
-        }));
+        // children: List.generate(_tree.length, (index) {
+        //   return _buildWrappedLine(_tree[index]);
+        // })
+        children: _lines);
   }
 
   @override
@@ -110,6 +105,20 @@ class _TreeEditFieldState extends State<TreeEditField> {
     super.dispose();
 
     widget.onDispose(makeNote());
+  }
+
+  void _buildData(Node node, [int level = 0]) {
+    node.children.forEach((child) {
+      _tree.add(NodeModel(level: level, title: child.title));
+      _buildData(child, level + 1);
+    });
+  }
+
+  void _buildLines() {
+    _buildData(widget.root);
+    _tree.forEach((node) {
+      _lines.add(_buildWrappedLine(node));
+    });
   }
 
   String makeNote() {
@@ -128,38 +137,59 @@ class _TreeEditFieldState extends State<TreeEditField> {
   }
 
   Widget _buildLine(NodeModel node) {
-    return TextField(
-      controller: TextEditingController(text: ' ' + node.title),
-      focusNode: node.focusNode,
-      decoration: InputDecoration(
-        border: InputBorder.none,
-      ),
-      onChanged: (text) {
-        if (text.isEmpty) {
-          int index = _tree.indexOf(node);
-          index = (index != 0) ? index - 1 : 0;
-          setState(() {
-            _tree.remove(node);
-          });
-          _tree[index].focusNode.requestFocus();
-        } else
-          _tree[_tree.indexOf(node)].title = text;
-      },
-      onSubmitted: (text) {
-        setState(() {
-          _tree.insert(
-              _tree.indexOf(node) + 1,
-              NodeModel(title: '', level: node.level));
-        });
-        _tree[_tree.indexOf(node) + 1].focusNode.requestFocus();
-      },
-    );
+    return RawKeyboardListener(
+        focusNode: node.focusNode,
+        onKey: (event) {
+          String keyName = event.logicalKey.debugName;
+          int keyID = event.logicalKey.keyId;
+          // print('Key: ${keyName}, KeyId: ${keyId}');
+          print(keyName);
+          print(keyID);
+          if (keyName == 'Enter') {
+            NodeModel newNode = NodeModel(title: '', level: node.level);
+            int index = _tree.indexOf(node) + 1;
+            setState(() {
+              _tree.insert(index, newNode);
+              _lines.insert(index, _buildWrappedLine(newNode));
+            });
+            _tree[index].focusNode.requestFocus();
+          }
+        },
+        child: TextField(
+          controller: TextEditingController(text: ' ' + node.title),
+          textInputAction: TextInputAction.none,
+          // focusNode: node.focusNode,
+          decoration: InputDecoration(
+            border: InputBorder.none,
+          ),
+          onChanged: (text) {
+            if (text.isEmpty) {
+              int index = _tree.indexOf(node);
+              setState(() {
+                _tree.remove(node);
+                _lines.removeAt(index);
+              });
+              index = (index != 0) ? index - 1 : 0;
+              _tree[index].focusNode.requestFocus();
+            } else
+              _tree[_tree.indexOf(node)].title = text;
+          },
+          onSubmitted: (text) {
+            NodeModel newNode = NodeModel(title: '', level: node.level);
+            int index = _tree.indexOf(node) + 1;
+            setState(() {
+              _tree.insert(index, newNode);
+              _lines.insert(index, _buildWrappedLine(newNode));
+            });
+            _tree[index].focusNode.requestFocus();
+          },
+        ));
   }
 
   Widget _buildWrappedLine(NodeModel node) {
     return Dismissible(
         key: UniqueKey(),
-        child: GestureDetector(
+        // child: GestureDetector(
             child: Container(
               height: 30,
               child: Row(children: <Widget>[
@@ -171,20 +201,20 @@ class _TreeEditFieldState extends State<TreeEditField> {
                 Expanded(child: _buildLine(node)),
               ]),
             ),
-            onHorizontalDragEnd: (detail) {
-              int index = _tree.indexOf(node);
-              if (index == 0) return;
+            // onHorizontalDragEnd: (detail) {
+            //   int index = _tree.indexOf(node);
+            //   if (index == 0) return;
 
-              setState(() {
-                if (detail.primaryVelocity < 0 && _tree[index].level > 0) {
-                  _tree[index].level--;
-                } else if (0 < detail.primaryVelocity &&
-                    (_tree[index].level - _tree[index - 1].level) != 1) {
-                  _tree[index].level++;
-                }
-              });
-              widget.onDispose(makeNote());
-            }),
+            //   setState(() {
+            //     if (detail.primaryVelocity < 0 && _tree[index].level > 0) {
+            //       _tree[index].level--;
+            //     } else if (0 < detail.primaryVelocity &&
+            //         (_tree[index].level - _tree[index - 1].level) != 1) {
+            //       _tree[index].level++;
+            //     }
+            //   });
+            //   widget.onDispose(makeNote());
+            // }),
         onDismissed: (direction) {
           setState(() {
             _tree.remove(node);

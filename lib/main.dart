@@ -62,8 +62,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var _noteList = List<String>();
-  var _currentIndex = -1;
+  List<String> _noteList = List<String>();
+  int _currentIndex = -1;
 
   static const appID = 'ca-app-pub-2711901930280470~3980905909';
   static const adUnitID = 'ca-app-pub-2711901930280470/4689992508';
@@ -83,12 +83,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    _bannerAd?.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
         margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
@@ -104,6 +98,12 @@ class _MyHomePageState extends State<MyHomePage> {
         ));
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+    _bannerAd?.dispose();
+  }
+
   void loadNoteList() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     const key = "note-list";
@@ -112,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() => _noteList = prefs.getStringList(key) ?? []);
     }
   }
-
 
   void _addNote() {
     setState(() {
@@ -149,19 +148,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildGrid() {
-    // return GridView.count(
-    //   crossAxisCount: 2,
-    //   children: List.generate(_noteList.length, (idx) {
-    //     return _buildWrappedCard(_noteList[idx], idx);
-    //   }),
-    // );
-
     return ReorderableWrap(
-      // spacing: 8.0,
-      // runSpacing: 4.0,
       padding: const EdgeInsets.all(8),
       onReorder: (int oldIndex, int newIndex) {
-        // if (oldIndex < newIndex) newIndex--;
         final String note = _noteList.removeAt(oldIndex);
         setState(() {
           _noteList.insert(newIndex, note);
@@ -182,17 +171,16 @@ class _MyHomePageState extends State<MyHomePage> {
             width: size.width / 2 - 16,
             child: Column(children: <Widget>[
               Expanded(
-                child: ListTile(
-                  title: Text(
-                    root.title,
-                    maxLines: 2,
-                  ),
-                  trailing: _buildPopupMenu(index),
-                )
-              ),
+                  child: ListTile(
+                title: Text(
+                  root.title,
+                  maxLines: 2,
+                ),
+                trailing: _buildPopupMenu(index),
+              )),
               Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Mindmap(root: root)),
+                  padding: const EdgeInsets.all(10.0),
+                  child: Mindmap(root: root)),
             ])));
   }
 
@@ -209,14 +197,14 @@ class _MyHomePageState extends State<MyHomePage> {
         storeNoteList();
       },
       child: GestureDetector(
-        onTap: () {
-          _currentIndex = index;
-          Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (BuildContext context) {
-            return TreeEdit(_noteList[_currentIndex], _onChanged, _onDispose);
-          }));
-        },
-        child: _buildCard(root, index)),
+          onTap: () {
+            _currentIndex = index;
+            Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
+              return TreeEdit(_noteList[_currentIndex], _onChanged, _onDispose);
+            }));
+          },
+          child: _buildCard(root, index)),
     );
   }
 
