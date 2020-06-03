@@ -94,9 +94,6 @@ class _TreeEditFieldState extends State<TreeEditField> {
           });
           widget.onDispose(makeNote());
         },
-        // children: List.generate(_tree.length, (index) {
-        //   return _buildWrappedLine(_tree[index]);
-        // })
         children: _lines);
   }
 
@@ -136,88 +133,78 @@ class _TreeEditFieldState extends State<TreeEditField> {
     return str;
   }
 
+  void _insertNode(int index, int level) {
+    NodeModel newNode = NodeModel(title: '', level: level);
+    setState(() {
+      _tree.insert(index, newNode);
+      _lines.insert(index, _buildWrappedLine(newNode));
+    });
+  }
+
+  void _removeNode(int index) {
+    setState(() {
+      _tree.removeAt(index);
+      _lines.removeAt(index);
+    });
+  }
+
   Widget _buildLine(NodeModel node) {
-    return RawKeyboardListener(
-        focusNode: node.focusNode,
-        onKey: (event) {
-          String keyName = event.logicalKey.debugName;
-          int keyID = event.logicalKey.keyId;
-          // print('Key: ${keyName}, KeyId: ${keyId}');
-          print(keyName);
-          print(keyID);
-          if (keyName == 'Enter') {
-            NodeModel newNode = NodeModel(title: '', level: node.level);
-            int index = _tree.indexOf(node) + 1;
-            setState(() {
-              _tree.insert(index, newNode);
-              _lines.insert(index, _buildWrappedLine(newNode));
-            });
-            _tree[index].focusNode.requestFocus();
-          }
-        },
-        child: TextField(
-          controller: TextEditingController(text: ' ' + node.title),
-          textInputAction: TextInputAction.none,
-          // focusNode: node.focusNode,
-          decoration: InputDecoration(
-            border: InputBorder.none,
-          ),
-          onChanged: (text) {
-            if (text.isEmpty) {
-              int index = _tree.indexOf(node);
-              setState(() {
-                _tree.remove(node);
-                _lines.removeAt(index);
-              });
-              index = (index != 0) ? index - 1 : 0;
-              _tree[index].focusNode.requestFocus();
-            } else
-              _tree[_tree.indexOf(node)].title = text;
-          },
-          onSubmitted: (text) {
-            NodeModel newNode = NodeModel(title: '', level: node.level);
-            int index = _tree.indexOf(node) + 1;
-            setState(() {
-              _tree.insert(index, newNode);
-              _lines.insert(index, _buildWrappedLine(newNode));
-            });
-            _tree[index].focusNode.requestFocus();
-          },
-        ));
+    return TextField(
+      controller: TextEditingController(text: ' ' + node.title),
+      textInputAction: TextInputAction.none,
+      focusNode: node.focusNode,
+      decoration: InputDecoration(
+        border: InputBorder.none,
+      ),
+      onChanged: (text) {
+        int index = _tree.indexOf(node);
+        if (text.isEmpty) {
+          _tree[index-1].focusNode.requestFocus();
+          _removeNode(index);
+        } else
+          _tree[index].title = text;
+      },
+      onEditingComplete: () {
+        int index = _tree.indexOf(node) + 1;
+        _insertNode(index, node.level);
+        _tree[index].focusNode.requestFocus();
+      },
+    );
   }
 
   Widget _buildWrappedLine(NodeModel node) {
     return Dismissible(
         key: UniqueKey(),
         // child: GestureDetector(
-            child: Container(
-              height: 30,
-              child: Row(children: <Widget>[
-                SpaceBox.width(30 * node.level.toDouble()),
-                Icon(
-                  Icons.arrow_right,
-                  color: Colors.grey[300],
-                ),
-                Expanded(child: _buildLine(node)),
-              ]),
+        child: Container(
+          height: 30,
+          child: Row(children: <Widget>[
+            SpaceBox.width(30 * node.level.toDouble()),
+            Icon(
+              Icons.arrow_right,
+              color: Colors.grey[300],
             ),
-            // onHorizontalDragEnd: (detail) {
-            //   int index = _tree.indexOf(node);
-            //   if (index == 0) return;
+            Expanded(child: _buildLine(node)),
+          ]),
+        ),
+        // onHorizontalDragEnd: (detail) {
+        //   int index = _tree.indexOf(node);
+        //   if (index == 0) return;
 
-            //   setState(() {
-            //     if (detail.primaryVelocity < 0 && _tree[index].level > 0) {
-            //       _tree[index].level--;
-            //     } else if (0 < detail.primaryVelocity &&
-            //         (_tree[index].level - _tree[index - 1].level) != 1) {
-            //       _tree[index].level++;
-            //     }
-            //   });
-            //   widget.onDispose(makeNote());
-            // }),
+        //   setState(() {
+        //     if (detail.primaryVelocity < 0 && _tree[index].level > 0) {
+        //       _tree[index].level--;
+        //     } else if (0 < detail.primaryVelocity &&
+        //         (_tree[index].level - _tree[index - 1].level) != 1) {
+        //       _tree[index].level++;
+        //     }
+        //   });
+        //   widget.onDispose(makeNote());
+        // }),
         onDismissed: (direction) {
           setState(() {
-            _tree.remove(node);
+            int index = _tree.indexOf(node);
+            _removeNode(index);
           });
           widget.onDispose(makeNote());
         });
