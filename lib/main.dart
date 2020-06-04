@@ -65,7 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<String> _noteList = List<String>();
   int _currentIndex = -1;
 
-  static const adUnitID = 'ca-app-pub-2711901930280470/7756499383';
+  static const adUnitID = 'ca-app-pub-2711901930280470/4689992508';
   static const appID = 'ca-app-pub-2711901930280470~3980905909';
   BannerAd _bannerAd;
 
