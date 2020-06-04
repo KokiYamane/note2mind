@@ -120,8 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
       storeNoteList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context) {
-          // return TreeEdit(_noteList[_currentIndex], _onChanged, _onDispose);
-          return TreeEdit(_noteList, _currentIndex, _onChanged, _onDispose);
+          return TreeEdit(note: _noteList[_currentIndex], onChanged: _onChanged);
         },
       ));
     });
@@ -132,11 +131,6 @@ class _MyHomePageState extends State<MyHomePage> {
       _noteList[_currentIndex] = text;
       storeNoteList();
     });
-  }
-
-  void _onDispose(String text) {
-    _noteList[_currentIndex] = text;
-    storeNoteList();
   }
 
   void storeNoteList() async {
@@ -190,7 +184,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Dismissible(
       key: UniqueKey(),
-      // direction: DismissDirection.endToStart,
       onDismissed: (direction) {
         setState(() {
           _noteList.removeAt(index);
@@ -202,8 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
             _currentIndex = index;
             Navigator.of(context)
                 .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-              // return TreeEdit(_noteList[_currentIndex], _onChanged, _onDispose);
-              return TreeEdit(_noteList, _currentIndex, _onChanged, _onDispose);
+          return TreeEdit(note: _noteList[_currentIndex], onChanged: _onChanged);
             }));
           },
           child: _buildCard(root, index)),

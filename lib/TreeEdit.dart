@@ -4,44 +4,58 @@ import 'package:flutter/material.dart';
 import 'package:note2mind/Node.dart';
 import 'package:note2mind/Mindmap.dart';
 
-class TreeEdit extends StatelessWidget {
-  // final String _current;
-  final List<String> _noteList;
-  final int _currentIndex;
-  final Function _onChanged;
-  final Function _onDispose;
+class TreeEdit extends StatefulWidget {
+  TreeEdit({Key key, this.note, this.onChanged})
+      : super(key: key);
 
-  // TreeEdit(this._current, this._onChanged, this._onDispose);
-  TreeEdit(this._noteList, this._currentIndex, this._onChanged, this._onDispose);
+  final String note;
+  final Function onChanged;
+
+  @override
+  _TreeEditState createState() => _TreeEditState();
+}
+
+class _TreeEditState extends State<TreeEdit> {
+  String note;
+  String title;
+
+  @override
+  void initState() {
+    super.initState();
+
+    note = widget.note;
+    title = Node.readMarkdown(note).title;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
         margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
         child: Scaffold(
-          // appBar: _buildAppBar(context, _current),
           appBar: _buildAppBar(context),
           body: TreeEditField(
-              // root: Node.readMarkdown(_current),
-              root: Node.readMarkdown(_noteList[_currentIndex]),
-              onChanged: _onChanged,
-              onDispose: _onDispose),
+              root: Node.readMarkdown(widget.note),
+              onChanged: _saveNote)
         ));
   }
 
   Widget _buildAppBar(BuildContext context) {
-    final Node root = Node.readMarkdown(_noteList[_currentIndex]);
     return AppBar(
       title: TextField(
-        controller: TextEditingController(text: root.title),
+        controller: TextEditingController(text: title),
         decoration: InputDecoration(
           border: InputBorder.none,
         ),
         style: TextStyle(
             fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
         onChanged: (text) {
-          root.title = text;
-          _onChanged(root.writeMarkdown());
+          // Node root = Node.readMarkdown(note);
+          // root.title = text;
+          title = text;
+          // widget.onChanged(root.writeMarkdown());
+          // _saveNote(note);
+          note = _changeTitle(note, title);
+          widget.onChanged(note);
         },
       ),
       actions: <Widget>[
@@ -50,7 +64,7 @@ class TreeEdit extends StatelessWidget {
           onPressed: () {
             Navigator.of(context)
                 .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-              return MindmapPage(Node.readMarkdown(_noteList[_currentIndex]));
+              return MindmapPage(Node.readMarkdown(note));
             }));
           },
         ),
@@ -61,15 +75,28 @@ class TreeEdit extends StatelessWidget {
       ),
     );
   }
+
+  String _changeTitle(String markdown, String title) {
+    List<String> lines = markdown.split('\n');
+    lines[0] = '# ' + title;
+    return lines.reduce((curr, next) => curr + '\n' + next);
+  }
+
+  void _saveNote(String newNote) {
+    setState(() {
+      note = newNote;
+      note = _changeTitle(note, title);
+      widget.onChanged(note);
+    });
+  }
 }
 
 class TreeEditField extends StatefulWidget {
-  TreeEditField({Key key, this.root, this.onChanged, this.onDispose})
+  TreeEditField({Key key, this.root, this.onChanged})
       : super(key: key);
 
   final Node root;
   final Function onChanged;
-  final Function onDispose;
 
   @override
   _TreeEditFieldState createState() => _TreeEditFieldState();
@@ -96,13 +123,6 @@ class _TreeEditFieldState extends State<TreeEditField> {
           _insertNode(newIndex, node);
         },
         children: _lines);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    widget.onDispose(makeNote());
   }
 
   void _buildData(Node node, [int level = 0]) {
