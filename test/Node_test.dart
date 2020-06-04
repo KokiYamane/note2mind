@@ -28,5 +28,7 @@ void main() {
     print(root2.getNodeNum().toString());
     print(root.getMaxLevel().toString());
     print(root2.getMaxLevel().toString());
+    print(root2.getLevel());
+    print(root2.getChild('リスト1').getLevel());
   });
 }

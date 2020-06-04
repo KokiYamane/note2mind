@@ -1,39 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_admob/firebase_admob.dart';
+import 'package:reorderables/reorderables.dart';
 
 import 'package:note2mind/Node.dart';
 import 'package:note2mind/TreeEdit.dart';
 import 'package:note2mind/Mindmap.dart';
 
-// String markdown = '''
-// # Central Topic
-// - subtopic1
-//   - subtopic1_1
-//     - related idea1_1_1
-//     - related idea1_1_2
-//   - subtopic1_2
-//     - related idea3_1_1
-//     - related idea3_1_2
-// - subtopic2
-//   - subtopic2_1
-//     - related idea2_1_1
-//     - related idea2_1_2
-//   - subtopic2_2
-//     - related idea3_1_1
-//     - related idea3_1_2
-// - subtopic3
-//   - subtopic3_1
-//     - related idea3_1_1
-//     - related idea3_1_2
-//   - subtopic3_2
-//     - related idea3_2_1
-//     - related idea3_2_2
-// ''';
 String markdown = '''
 # Central Topic
 - subtopic1
+  - subtopic1_1
+    - related idea1_1_1
+    - related idea1_1_2
+  - subtopic1_2
+    - related idea3_1_1
+    - related idea3_1_2
+- subtopic2
+  - subtopic2_1
+    - related idea2_1_1
+    - related idea2_1_2
+  - subtopic2_2
+    - related idea3_1_1
+    - related idea3_1_2
+- subtopic3
+  - subtopic3_1
+    - related idea3_1_1
+    - related idea3_1_2
+  - subtopic3_2
+    - related idea3_2_1
+    - related idea3_2_2
 ''';
+// String markdown = '''
+// # Central Topic
+// - subtopic1
+// ''';
 
 void main() => runApp(MyApp());
 
@@ -61,8 +62,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var _noteList = List<String>();
-  var _currentIndex = -1;
+  List<String> _noteList = List<String>();
+  int _currentIndex = -1;
 
   static const adUnitID = 'ca-app-pub-2711901930280470/7756499383';
   static const appID = 'ca-app-pub-2711901930280470~3980905909';
@@ -82,12 +83,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    _bannerAd?.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
         margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
@@ -101,6 +96,12 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Icon(Icons.add),
           ),
         ));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _bannerAd?.dispose();
   }
 
   void loadNoteList() async {
@@ -119,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
       storeNoteList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context) {
-          return TreeEdit(_noteList[_currentIndex], _onChanged);
+          return TreeEdit(note: _noteList[_currentIndex], onChanged: _onChanged);
         },
       ));
     });
@@ -142,58 +143,27 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
+    return ReorderableWrap(
+      padding: const EdgeInsets.all(8),
+      onReorder: (int oldIndex, int newIndex) {
+        final String note = _noteList.removeAt(oldIndex);
+        setState(() {
+          _noteList.insert(newIndex, note);
+        });
+      },
       children: List.generate(_noteList.length, (idx) {
-        String note = _noteList[idx];
-        return _buildWrappedCard(note, idx);
+        return _buildWrappedCard(_noteList[idx], idx);
       }),
     );
   }
 
-  Widget _buildWrappedCard(String content, int index) {
-    Node root = Node.readMarkdown(content);
-
-    return Dismissible(
-      key: UniqueKey(),
-      // direction: DismissDirection.endToStart,
-      onDismissed: (direction) {
-        setState(() {
-          _noteList.removeAt(index);
-        });
-        storeNoteList();
-      },
-      child: DragTarget<int>(
-        builder: (context, candidateData, rejectedData) {
-          return LongPressDraggable<int>(
-              data: index,
-              child: GestureDetector(
-                  onTap: () {
-                    _currentIndex = index;
-                    Navigator.of(context).push(MaterialPageRoute<void>(
-                        builder: (BuildContext context) {
-                      return TreeEdit(_noteList[_currentIndex], _onChanged);
-                    }));
-                  },
-                  child: _buildCard(root, index)),
-              feedback: _buildCard(root, index));
-        },
-        onAccept: (moveIndex) {
-          String movingItem = _noteList[moveIndex];
-          setState(() {
-            _noteList.removeAt(moveIndex);
-            _noteList.insert(index, movingItem);
-          });
-        },
-      ),
-    );
-  }
-
   Widget _buildCard(Node root, int index) {
+    final Size size = MediaQuery.of(context).size;
+
     return Card(
         child: Container(
-            height: 150,
-            width: 150,
+            height: size.width / 2 - 16,
+            width: size.width / 2 - 16,
             child: Column(children: <Widget>[
               Expanded(
                   child: ListTile(
@@ -201,7 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   root.title,
                   maxLines: 2,
                 ),
-                trailing: _buildPopuMenu(index),
+                trailing: _buildPopupMenu(index),
               )),
               Padding(
                   padding: const EdgeInsets.all(10.0),
@@ -209,7 +179,30 @@ class _MyHomePageState extends State<MyHomePage> {
             ])));
   }
 
-  Widget _buildPopuMenu(int index) {
+  Widget _buildWrappedCard(String content, int index) {
+    Node root = Node.readMarkdown(content);
+
+    return Dismissible(
+      key: UniqueKey(),
+      onDismissed: (direction) {
+        setState(() {
+          _noteList.removeAt(index);
+        });
+        storeNoteList();
+      },
+      child: GestureDetector(
+          onTap: () {
+            _currentIndex = index;
+            Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
+          return TreeEdit(note: _noteList[_currentIndex], onChanged: _onChanged);
+            }));
+          },
+          child: _buildCard(root, index)),
+    );
+  }
+
+  Widget _buildPopupMenu(int index) {
     return PopupMenuButton<String>(
       onSelected: (String s) {
         if (s == 'copy') {
