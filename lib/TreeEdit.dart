@@ -5,30 +5,35 @@ import 'package:note2mind/Node.dart';
 import 'package:note2mind/Mindmap.dart';
 
 class TreeEdit extends StatelessWidget {
-  final String _current;
+  // final String _current;
+  final List<String> _noteList;
+  final int _currentIndex;
   final Function _onChanged;
   final Function _onDispose;
 
-  TreeEdit(this._current, this._onChanged, this._onDispose);
+  // TreeEdit(this._current, this._onChanged, this._onDispose);
+  TreeEdit(this._noteList, this._currentIndex, this._onChanged, this._onDispose);
 
   @override
   Widget build(BuildContext context) {
-    final Node root = Node.readMarkdown(_current);
-
     return Container(
         margin: const EdgeInsets.fromLTRB(0, 0, 0, 60),
         child: Scaffold(
-          appBar: _buildAppBar(context, root),
+          // appBar: _buildAppBar(context, _current),
+          appBar: _buildAppBar(context),
           body: TreeEditField(
-              root: root, onChanged: _onChanged, onDispose: _onDispose),
+              // root: Node.readMarkdown(_current),
+              root: Node.readMarkdown(_noteList[_currentIndex]),
+              onChanged: _onChanged,
+              onDispose: _onDispose),
         ));
   }
 
-  Widget _buildAppBar(BuildContext context, Node root) {
+  Widget _buildAppBar(BuildContext context) {
+    final Node root = Node.readMarkdown(_noteList[_currentIndex]);
     return AppBar(
       title: TextField(
         controller: TextEditingController(text: root.title),
-        // focusNode: root.getFocusNode(),
         decoration: InputDecoration(
           border: InputBorder.none,
         ),
@@ -45,7 +50,7 @@ class TreeEdit extends StatelessWidget {
           onPressed: () {
             Navigator.of(context)
                 .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-              return MindmapPage(root);
+              return MindmapPage(Node.readMarkdown(_noteList[_currentIndex]));
             }));
           },
         ),
@@ -88,11 +93,7 @@ class _TreeEditFieldState extends State<TreeEditField> {
           if (oldIndex < newIndex) newIndex -= 1;
           final NodeModel node = _tree.removeAt(oldIndex);
           _lines.removeAt(oldIndex);
-          setState(() {
-            _tree.insert(newIndex, node);
-            _lines.insert(newIndex, _buildWrappedLine(node));
-          });
-          widget.onDispose(makeNote());
+          _insertNode(newIndex, node);
         },
         children: _lines);
   }
@@ -133,12 +134,12 @@ class _TreeEditFieldState extends State<TreeEditField> {
     return str;
   }
 
-  void _insertNode(int index, int level) {
-    NodeModel newNode = NodeModel(title: '', level: level);
+  void _insertNode(int index, NodeModel nodeModel) {
     setState(() {
-      _tree.insert(index, newNode);
-      _lines.insert(index, _buildWrappedLine(newNode));
+      _tree.insert(index, nodeModel);
+      _lines.insert(index, _buildWrappedLine(nodeModel));
     });
+    widget.onChanged(makeNote());
   }
 
   void _removeNode(int index) {
@@ -146,6 +147,7 @@ class _TreeEditFieldState extends State<TreeEditField> {
       _tree.removeAt(index);
       _lines.removeAt(index);
     });
+    widget.onChanged(makeNote());
   }
 
   Widget _buildLine(NodeModel node) {
@@ -159,23 +161,23 @@ class _TreeEditFieldState extends State<TreeEditField> {
       onChanged: (text) {
         int index = _tree.indexOf(node);
         if (text.isEmpty) {
-          _tree[index-1].focusNode.requestFocus();
+          if (index == 0) return;
+          _tree[index - 1].focusNode.requestFocus();
           _removeNode(index);
         } else
           _tree[index].title = text;
       },
       onEditingComplete: () {
         int index = _tree.indexOf(node) + 1;
-        _insertNode(index, node.level);
+        _insertNode(index, NodeModel(title: '', level: node.level));
         _tree[index].focusNode.requestFocus();
       },
     );
   }
 
   Widget _buildWrappedLine(NodeModel node) {
-    return Dismissible(
+    return GestureDetector(
         key: UniqueKey(),
-        // child: GestureDetector(
         child: Container(
           height: 30,
           child: Row(children: <Widget>[
@@ -187,26 +189,20 @@ class _TreeEditFieldState extends State<TreeEditField> {
             Expanded(child: _buildLine(node)),
           ]),
         ),
-        // onHorizontalDragEnd: (detail) {
-        //   int index = _tree.indexOf(node);
-        //   if (index == 0) return;
+        onHorizontalDragEnd: (detail) {
+          int index = _tree.indexOf(node);
+          if (index == 0) return;
 
-        //   setState(() {
-        //     if (detail.primaryVelocity < 0 && _tree[index].level > 0) {
-        //       _tree[index].level--;
-        //     } else if (0 < detail.primaryVelocity &&
-        //         (_tree[index].level - _tree[index - 1].level) != 1) {
-        //       _tree[index].level++;
-        //     }
-        //   });
-        //   widget.onDispose(makeNote());
-        // }),
-        onDismissed: (direction) {
           setState(() {
-            int index = _tree.indexOf(node);
-            _removeNode(index);
+            if (detail.primaryVelocity < 0 && _tree[index].level > 0) {
+              _tree[index].level--;
+            } else if (0 < detail.primaryVelocity &&
+                (_tree[index].level - _tree[index - 1].level) <= 0) {
+              _tree[index].level++;
+            }
+            _lines[index] = _buildWrappedLine(_tree[index]);
           });
-          widget.onDispose(makeNote());
+          widget.onChanged(makeNote());
         });
   }
 }
