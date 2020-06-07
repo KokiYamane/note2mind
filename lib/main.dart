@@ -7,34 +7,34 @@ import 'package:note2mind/Node.dart';
 import 'package:note2mind/TreeEdit.dart';
 import 'package:note2mind/Mindmap.dart';
 
-String markdown = '''
-# Central Topic
-- subtopic1
-  - subtopic1_1
-    - related idea1_1_1
-    - related idea1_1_2
-  - subtopic1_2
-    - related idea3_1_1
-    - related idea3_1_2
-- subtopic2
-  - subtopic2_1
-    - related idea2_1_1
-    - related idea2_1_2
-  - subtopic2_2
-    - related idea3_1_1
-    - related idea3_1_2
-- subtopic3
-  - subtopic3_1
-    - related idea3_1_1
-    - related idea3_1_2
-  - subtopic3_2
-    - related idea3_2_1
-    - related idea3_2_2
-''';
 // String markdown = '''
 // # Central Topic
 // - subtopic1
+//   - subtopic1_1
+//     - related idea1_1_1
+//     - related idea1_1_2
+//   - subtopic1_2
+//     - related idea3_1_1
+//     - related idea3_1_2
+// - subtopic2
+//   - subtopic2_1
+//     - related idea2_1_1
+//     - related idea2_1_2
+//   - subtopic2_2
+//     - related idea3_1_1
+//     - related idea3_1_2
+// - subtopic3
+//   - subtopic3_1
+//     - related idea3_1_1
+//     - related idea3_1_2
+//   - subtopic3_2
+//     - related idea3_2_1
+//     - related idea3_2_2
 // ''';
+String markdown = '''
+# Central Topic
+- subtopic1
+''';
 
 void main() => runApp(MyApp());
 
@@ -120,7 +120,8 @@ class _MyHomePageState extends State<MyHomePage> {
       storeNoteList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context) {
-          return TreeEdit(note: _noteList[_currentIndex], onChanged: _onChanged);
+          return TreeEdit(
+              note: _noteList[_currentIndex], onChanged: _onChanged);
         },
       ));
     });
@@ -159,11 +160,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildCard(Node root, int index) {
     final Size size = MediaQuery.of(context).size;
+    double colNum = (size.width / 300).roundToDouble();
+    double cardWidth = size.width / colNum - 16;
 
     return Card(
         child: Container(
-            height: size.width / 2 - 16,
-            width: size.width / 2 - 16,
+            height: cardWidth,
+            width: cardWidth,
             child: Column(children: <Widget>[
               Expanded(
                   child: ListTile(
@@ -195,7 +198,8 @@ class _MyHomePageState extends State<MyHomePage> {
             _currentIndex = index;
             Navigator.of(context)
                 .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-          return TreeEdit(note: _noteList[_currentIndex], onChanged: _onChanged);
+              return TreeEdit(
+                  note: _noteList[_currentIndex], onChanged: _onChanged);
             }));
           },
           child: _buildCard(root, index)),
